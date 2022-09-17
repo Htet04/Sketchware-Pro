@@ -26,6 +26,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
+import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
@@ -49,13 +50,15 @@ import com.besome.sketch.tools.CompileLogActivity;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.sketchware.remod.R;
+import com.topjohnwu.superuser.Shell;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 import a.a.a.DB;
 import a.a.a.Dp;
-import a.a.a.Ep;
 import a.a.a.GB;
 import a.a.a.MA;
 import a.a.a.Xf;
@@ -90,7 +93,6 @@ import mod.hey.studios.activity.managers.java.ManageJavaActivity;
 import mod.hey.studios.activity.managers.nativelib.ManageNativelibsActivity;
 import mod.hey.studios.build.BuildSettingsDialog;
 import mod.hey.studios.compiler.kotlin.KotlinCompilerBridge;
-import mod.hey.studios.project.DesignActRunnable;
 import mod.hey.studios.project.custom_blocks.CustomBlocksDialog;
 import mod.hey.studios.project.proguard.ManageProguardActivity;
 import mod.hey.studios.project.proguard.ProguardHandler;
@@ -98,6 +100,10 @@ import mod.hey.studios.project.stringfog.ManageStringfogActivity;
 import mod.hey.studios.project.stringfog.StringfogHandler;
 import mod.hey.studios.util.Helper;
 import mod.hilal.saif.activities.android_manifest.AndroidManifestInjection;
+import mod.hilal.saif.activities.tools.ConfigActivity;
+import mod.jbk.build.BuildProgressReceiver;
+import mod.jbk.code.CodeEditorColorSchemes;
+import mod.jbk.code.CodeEditorLanguages;
 import mod.jbk.diagnostic.CompileErrorSaver;
 import mod.jbk.diagnostic.MissingFileException;
 import mod.jbk.util.LogUtil;
@@ -116,7 +122,7 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
     private ImageView xmlLayoutOrientation;
     private boolean B = false;
     private int currentTabNumber;
-    private DesignActivity.f J = null;
+    private UnsavedChangesSaver unsavedChangesSaver = null;
     private String sc_id;
     private CustomViewPager viewPager;
     private CoordinatorLayout coordinatorLayout;
@@ -144,14 +150,14 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
         }
     }
 
-    private void a(boolean var1) {
-        jC.a(sc_id, var1);
-        jC.b(sc_id, var1);
-        kC var2 = jC.d(sc_id, var1);
-        jC.c(sc_id, var1);
+    private void loadProject(boolean haveSavedState) {
+        jC.a(sc_id, haveSavedState);
+        jC.b(sc_id, haveSavedState);
+        kC var2 = jC.d(sc_id, haveSavedState);
+        jC.c(sc_id, haveSavedState);
         cC.c(sc_id);
         bC.d(sc_id);
-        if (!var1) {
+        if (!haveSavedState) {
             var2.f();
             var2.g();
             var2.e();
@@ -198,7 +204,7 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
         super.finish();
     }
 
-    private void l() {
+    private void checkForUnsavedProjectData() {
         if (jC.c(sc_id).g() || jC.b(sc_id).g() || jC.d(sc_id).q() || jC.a(sc_id).d() || jC.a(sc_id).c()) {
             askIfToRestoreOldUnsavedProjectData();
         }
@@ -212,6 +218,42 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
      * Opens the debug APK to install.
      */
     private void installBuiltApk() {
+        if (!ConfigActivity.isSettingEnabled(ConfigActivity.SETTING_ROOT_AUTO_INSTALL_PROJECTS)) {
+            requestPackageInstallerInstall();
+        } else {
+            File apkUri = new File(q.finalToInstallApkPath);
+            long length = apkUri.length();
+            Shell.getShell(shell -> {
+                if (shell.isRoot()) {
+                    List<String> stdout = new LinkedList<>();
+                    List<String> stderr = new LinkedList<>();
+
+                    Shell.cmd("cat " + apkUri + " | pm install -S " + length).to(stdout, stderr).submit(result -> {
+                        if (result.isSuccess()) {
+                            SketchwareUtil.toast("Package installed successfully!");
+                            if (ConfigActivity.isSettingEnabled(ConfigActivity.SETTING_ROOT_AUTO_OPEN_AFTER_INSTALLING)) {
+                                Intent launcher = getPackageManager().getLaunchIntentForPackage(q.packageName);
+                                if (launcher != null) {
+                                    startActivity(launcher);
+                                } else {
+                                    SketchwareUtil.toastError("Couldn't launch project, either not installed or not with launcher activity.");
+                                }
+                            }
+                        } else {
+                            String sharedErrorMessage = "Failed to install package, result code: " + result.getCode() + ". ";
+                            SketchwareUtil.toastError(sharedErrorMessage + "Logs are available in /Internal storage/.sketchware/debug.txt", Toast.LENGTH_LONG);
+                            LogUtil.e("DesignActivity", sharedErrorMessage + "stdout: " + stdout + ", stderr: " + stderr);
+                        }
+                    });
+                } else {
+                    SketchwareUtil.toastError("No root access granted. Continuing using default package install prompt.");
+                    requestPackageInstallerInstall();
+                }
+            });
+        }
+    }
+
+    private void requestPackageInstallerInstall() {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         if (Build.VERSION.SDK_INT >= 24) {
             Uri apkUri = FileProvider.a(getApplicationContext(), getApplicationContext().getPackageName() + ".provider", new File(q.finalToInstallApkPath));
@@ -310,7 +352,7 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
                 viewPager.setCurrentItem(currentTabNumber);
             } else if (t.c("P12I2")) {
                 k();
-                new e(getApplicationContext()).execute();
+                new SaveChangesProjectCloser(getApplicationContext()).execute();
             } else {
                 showSaveBeforeQuittingDialog();
             }
@@ -402,7 +444,6 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
         d().e(true);
         toolbar.setNavigationOnClickListener(Helper.getBackPressedClickListener(this));
         toolbar.setPopupTheme(R.style.ThemeOverlay_ToolbarMenu);
-
         // Replaced empty anonymous class with null
         getSupportFragmentManager().a((Xf.c) null);
         drawer = findViewById(R.id.drawer_layout);
@@ -515,7 +556,7 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
             }
         } else if (itemId == R.id.design_option_menu_title_save_project) {
             k();
-            new d(getApplicationContext()).execute();
+            new ProjectSaver(getApplicationContext()).execute();
         }
 
         return super.onOptionsItemSelected(item);
@@ -531,7 +572,7 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
         q = new yq(getApplicationContext(), wq.d(sc_id), projectInfo);
 
         try {
-            new b(getBaseContext(), savedInstanceState).execute();
+            new ProjectLoader(getBaseContext(), savedInstanceState).execute();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -559,13 +600,13 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
             finish();
         }
 
-        if (J != null && !J.isCancelled()) {
-            J.cancel(true);
+        if (unsavedChangesSaver != null && !unsavedChangesSaver.isCancelled()) {
+            unsavedChangesSaver.cancel(true);
         }
 
         if (!B) {
-            J = new DesignActivity.f(getApplicationContext());
-            J.execute();
+            unsavedChangesSaver = new UnsavedChangesSaver(getApplicationContext());
+            unsavedChangesSaver.execute();
         }
     }
 
@@ -582,7 +623,7 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
                 dialog.dismiss();
                 try {
                     k();
-                    new e(getApplicationContext()).execute();
+                    new SaveChangesProjectCloser(getApplicationContext()).execute();
                 } catch (Exception e) {
                     e.printStackTrace();
                     h();
@@ -594,7 +635,7 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
                 dialog.dismiss();
                 try {
                     k();
-                    new c(getApplicationContext()).execute();
+                    new DiscardChangesProjectCloser(getApplicationContext()).execute();
                 } catch (Exception e) {
                     e.printStackTrace();
                     h();
@@ -679,10 +720,11 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
         progress.show();
 
         new Thread(() -> {
-            final String source = new yq(getApplicationContext(), sc_id).getFileSrc(projectFileSelector.getFileName(), jC.b(sc_id), jC.a(sc_id), jC.c(sc_id));
+            String filename = projectFileSelector.getFileName();
+            final String source = new yq(getApplicationContext(), sc_id).getFileSrc(filename, jC.b(sc_id), jC.a(sc_id), jC.c(sc_id));
 
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(DesignActivity.this)
-                    .setTitle(projectFileSelector.getFileName())
+                    .setTitle(filename)
                     .setCancelable(false)
                     .setPositiveButton("Dismiss", null);
 
@@ -693,11 +735,17 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
                 CodeEditor editor = new CodeEditor(DesignActivity.this);
                 editor.setTypefaceText(Typeface.MONOSPACE);
                 editor.setEditable(false);
-                editor.setEditorLanguage(new JavaLanguage());
-                editor.setColorScheme(new EditorColorScheme());
                 editor.setTextSize(14);
                 editor.setText(!source.equals("") ? source : "Failed to generate source.");
                 editor.getComponent(Magnifier.class).setWithinEditorForcibly(true);
+
+                if (filename.endsWith(".xml")) {
+                    editor.setColorScheme(CodeEditorColorSchemes.GITHUB);
+                    editor.setEditorLanguage(CodeEditorLanguages.XML);
+                } else {
+                    editor.setColorScheme(new EditorColorScheme());
+                    editor.setEditorLanguage(new JavaLanguage());
+                }
 
                 AlertDialog dialog = dialogBuilder.create();
                 dialog.setView(editor,
@@ -862,7 +910,7 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
     }
 
     @SafeVarargs
-    private void launchActivity(Class<? extends Activity> toLaunch, Integer optionalRequestCode, Pair<String, String>... extras) {
+    private final void launchActivity(Class<? extends Activity> toLaunch, Integer optionalRequestCode, Pair<String, String>... extras) {
         Intent intent = new Intent(getApplicationContext(), toLaunch);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.putExtra("sc_id", sc_id);
@@ -877,17 +925,17 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
         }
     }
 
-    public class BuildAsyncTask extends MA implements OnCancelListener {
+    private class BuildAsyncTask extends MA implements OnCancelListener, BuildProgressReceiver {
 
-        private final Ep dialog;
+        private final BuildingDialog dialog;
         private boolean canceled = false;
 
         public BuildAsyncTask(Context context) {
             super(context);
             DesignActivity.this.a((MA) this);
-            dialog = new Ep(DesignActivity.this);
+            dialog = new BuildingDialog(DesignActivity.this);
             maybeShow();
-            dialog.a(false);
+            dialog.setIsCancelableOnBackPressed(false);
         }
 
         /**
@@ -1085,7 +1133,11 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
          * @param progressText The new text to display as progress
          */
         public void setProgress(String progressText) {
-            runOnUiThread(new DesignActRunnable(dialog, progressText));
+            runOnUiThread(() -> {
+                if (dialog.isShowing()) {
+                    dialog.setProgress(progressText);
+                }
+            });
         }
 
         /**
@@ -1100,8 +1152,8 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
 
         @Override
         public void onCancel(DialogInterface dialogInterface) {
-            if (!dialog.a()) {
-                dialog.a(true);
+            if (!dialog.isCancelableOnBackPressed()) {
+                dialog.setIsCancelableOnBackPressed(true);
                 maybeShow();
                 publishProgress("Canceling build...");
                 canceled = true;
@@ -1133,26 +1185,27 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
 
-        public void publicPublishProgress(String... values) {
-            publishProgress(values);
+        @Override
+        public void onProgress(String progress) {
+            publishProgress(progress);
         }
     }
 
-    public class b extends MA {
+    private class ProjectLoader extends MA {
 
-        public Bundle c;
+        private final Bundle savedInstanceState;
 
-        public b(Context context, Bundle bundle) {
+        public ProjectLoader(Context context, Bundle savedInstanceState) {
             super(context);
             DesignActivity.this.a(this);
-            c = bundle;
+            this.savedInstanceState = savedInstanceState;
         }
 
         @Override
         public void a() {
-            if (c != null) {
-                projectFileSelector.onRestoreInstanceState(c);
-                if (c.getInt("file_selector_current_file_type") == 0) {
+            if (savedInstanceState != null) {
+                projectFileSelector.onRestoreInstanceState(savedInstanceState);
+                if (savedInstanceState.getInt("file_selector_current_file_type") == 0) {
                     xmlLayoutOrientation.setVisibility(View.VISIBLE);
                 } else {
                     xmlLayoutOrientation.setVisibility(View.GONE);
@@ -1161,8 +1214,8 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
 
             projectFileSelector.syncState();
             h();
-            if (c == null) {
-                l();
+            if (savedInstanceState == null) {
+                checkForUnsavedProjectData();
             }
         }
 
@@ -1173,7 +1226,7 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
 
         @Override
         public void b() {
-            DesignActivity.this.a(c != null);
+            loadProject(savedInstanceState != null);
         }
 
         @Override
@@ -1182,13 +1235,9 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
         }
     }
 
-    /**
-     * A project "saver" AsyncTask that doesn't actually save the project.
-     * Gets executed when clicking "Exit" in the "Save project?" dialog.
-     */
-    public class c extends MA {
+    private class DiscardChangesProjectCloser extends MA {
 
-        public c(Context context) {
+        public DiscardChangesProjectCloser(Context context) {
             super(context);
             DesignActivity.this.a(this);
         }
@@ -1207,7 +1256,6 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
 
         @Override
         public void b() {
-            publishProgress("Now processing..");
             jC.d(sc_id).v();
             jC.d(sc_id).w();
             jC.d(sc_id).u();
@@ -1219,12 +1267,9 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
         }
     }
 
-    /**
-     * An AsyncTask saving the project. This doesn't finish the activity, unlike {@link DesignActivity.e}.
-     */
-    public class d extends MA {
+    private class ProjectSaver extends MA {
 
-        public d(Context context) {
+        public ProjectSaver(Context context) {
             super(context);
             DesignActivity.this.a(this);
         }
@@ -1247,7 +1292,6 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
 
         @Override
         public void b() {
-            publishProgress("Now saving..");
             jC.d(sc_id).a();
             jC.b(sc_id).m();
             jC.a(sc_id).j();
@@ -1261,12 +1305,9 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
         }
     }
 
-    /**
-     * AsyncTask that saves the project when exiting {@link DesignActivity} normally.
-     */
-    public class e extends MA {
+    private class SaveChangesProjectCloser extends MA {
 
-        public e(Context context) {
+        public SaveChangesProjectCloser(Context context) {
             super(context);
             DesignActivity.this.a(this);
         }
@@ -1287,7 +1328,6 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
 
         @Override
         public void b() {
-            publishProgress("Now saving..");
             jC.d(sc_id).a();
             jC.b(sc_id).m();
             jC.a(sc_id).j();
@@ -1302,9 +1342,9 @@ public class DesignActivity extends BaseAppCompatActivity implements OnClickList
         }
     }
 
-    public class f extends MA {
+    private class UnsavedChangesSaver extends MA {
 
-        public f(Context context) {
+        public UnsavedChangesSaver(Context context) {
             super(context);
             DesignActivity.this.a(this);
         }

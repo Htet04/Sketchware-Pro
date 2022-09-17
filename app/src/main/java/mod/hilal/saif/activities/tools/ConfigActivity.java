@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -24,8 +25,11 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.sketchware.remod.R;
+import com.topjohnwu.superuser.Shell;
 
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 
 import mod.SketchwareUtil;
@@ -38,6 +42,8 @@ public class ConfigActivity extends Activity {
     public static final File SETTINGS_FILE = new File(FileUtil.getExternalStorageDir(), ".sketchware/data/settings.json");
     public static final String SETTING_ALWAYS_SHOW_BLOCKS = "always-show-blocks";
     public static final String SETTING_BACKUP_DIRECTORY = "backup-dir";
+    public static final String SETTING_ROOT_AUTO_INSTALL_PROJECTS = "root-auto-install-projects";
+    public static final String SETTING_ROOT_AUTO_OPEN_AFTER_INSTALLING = "root-auto-open-after-installing";
     public static final String SETTING_BACKUP_FILENAME = "backup-filename";
     public static final String SETTING_LEGACY_CODE_EDITOR = "legacy-ce";
     public static final String SETTING_SHOW_BUILT_IN_BLOCKS = "built-in-blocks";
@@ -84,8 +90,8 @@ public class ConfigActivity extends Activity {
             return toReturnAndSetIfNotFound;
         }
     }
-    
-    
+
+
     public static String getBackupFileName() {
         if (FileUtil.isExistFile(SETTINGS_FILE.getAbsolutePath())) {
             HashMap<String, Object> settings = new Gson().fromJson(FileUtil.readFile(SETTINGS_FILE.getAbsolutePath()), Helper.TYPE_MAP);
@@ -188,6 +194,8 @@ public class ConfigActivity extends Activity {
         settings.put(SETTING_ALWAYS_SHOW_BLOCKS, false);
         settings.put(SETTING_BACKUP_DIRECTORY, "/.sketchware/backups/");
         settings.put(SETTING_LEGACY_CODE_EDITOR, false);
+        settings.put(SETTING_ROOT_AUTO_INSTALL_PROJECTS, false);
+        settings.put(SETTING_ROOT_AUTO_OPEN_AFTER_INSTALLING, true);
         settings.put(SETTING_SHOW_BUILT_IN_BLOCKS, false);
         settings.put(SETTING_SHOW_EVERY_SINGLE_BLOCK, false);
         settings.put(SETTING_USE_NEW_VERSION_CONTROL, false);
@@ -292,6 +300,21 @@ public class ConfigActivity extends Activity {
                 "Enables old Code Editor from v6.2.0.",
                 SETTING_LEGACY_CODE_EDITOR,
                 false);
+        addSwitchPreference("Install projects with root access", "Automatically installs project APKs after building using root access.",
+                SETTING_ROOT_AUTO_INSTALL_PROJECTS, false, (buttonView, isChecked) -> {
+            if (isChecked) {
+                Shell.getShell(shell -> {
+                    if (!shell.isRoot()) {
+                        SketchwareUtil.toastError("Couldn't acquire root access");
+                        buttonView.setChecked(false);
+                    }
+                });
+            }
+        });
+        addSwitchPreference("Launch projects after installing",
+                "Opens projects automatically after auto-installation using root.",
+                SETTING_ROOT_AUTO_OPEN_AFTER_INSTALLING,
+                true);
         addSwitchPreference("Use new Version Control",
                 "Enables custom version code and name for projects.",
                 SETTING_USE_NEW_VERSION_CONTROL,
@@ -359,6 +382,10 @@ public class ConfigActivity extends Activity {
     }
 
     private void addSwitchPreference(String title, String subtitle, String keyName, boolean defaultValue) {
+        addSwitchPreference(title, subtitle, keyName, defaultValue, null);
+    }
+
+    private void addSwitchPreference(String title, String subtitle, String keyName, boolean defaultValue, CompoundButton.OnCheckedChangeListener onCheckedChangeListener) {
         LinearLayout preferenceRoot = new LinearLayout(this);
         preferenceRoot.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -451,8 +478,12 @@ public class ConfigActivity extends Activity {
 
         preferenceRoot.setOnClickListener(v -> switchView.setChecked(!switchView.isChecked()));
 
-        switchView.setOnCheckedChangeListener((buttonView, isChecked) ->
-                ConfigActivity.setSetting(keyName, isChecked));
+        switchView.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            ConfigActivity.setSetting(keyName, isChecked);
+            if (onCheckedChangeListener != null) {
+                onCheckedChangeListener.onCheckedChanged(buttonView, isChecked);
+            }
+        });
 
         if (setting_map.containsKey(keyName)) {
             Object value = setting_map.get(keyName);
@@ -471,6 +502,7 @@ public class ConfigActivity extends Activity {
             }
         } else {
             setting_map.put(keyName, defaultValue);
+            switchView.setChecked(defaultValue);
             FileUtil.writeFile(SETTINGS_FILE.getAbsolutePath(), new Gson().toJson(setting_map));
         }
         applyDesign(preferenceRoot);

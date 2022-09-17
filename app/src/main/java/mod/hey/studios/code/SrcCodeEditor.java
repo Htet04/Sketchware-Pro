@@ -39,7 +39,9 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
+import a.a.a.Lx;
 import io.github.rosemoe.sora.langs.java.JavaLanguage;
+import io.github.rosemoe.sora.langs.textmate.TextMateColorScheme;
 import io.github.rosemoe.sora.widget.CodeEditor;
 import io.github.rosemoe.sora.widget.component.EditorAutoCompletion;
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme;
@@ -50,12 +52,9 @@ import io.github.rosemoe.sora.widget.schemes.SchemeNotepadXX;
 import io.github.rosemoe.sora.widget.schemes.SchemeVS2019;
 import mod.SketchwareUtil;
 import mod.agus.jcoderz.lib.FileUtil;
+import mod.jbk.code.CodeEditorColorSchemes;
+import mod.jbk.code.CodeEditorLanguages;
 
-//6.3.0??
-
-/**
- * Sora Editor aka Rosemoe Editor
- */
 public class SrcCodeEditor extends AppCompatActivity {
 
     public static SharedPreferences pref;
@@ -83,31 +82,43 @@ public class SrcCodeEditor extends AppCompatActivity {
     public static void selectTheme(CodeEditor ed, int which) {
         EditorColorScheme scheme;
 
-        switch (which) {
-            default:
-            case 0:
-                scheme = new EditorColorScheme();
-                break;
+        if (ed.getColorScheme() instanceof TextMateColorScheme) {
+            switch (which) {
+                case 1:
+                    scheme = CodeEditorColorSchemes.GITHUB;
+                    break;
 
-            case 1:
-                scheme = new SchemeGitHub();
-                break;
+                case 3:
+                default:
+                    scheme = CodeEditorColorSchemes.DRACULA;
+            }
+        } else {
+            switch (which) {
+                default:
+                case 0:
+                    scheme = new EditorColorScheme();
+                    break;
 
-            case 2:
-                scheme = new SchemeEclipse();
-                break;
+                case 1:
+                    scheme = new SchemeGitHub();
+                    break;
 
-            case 3:
-                scheme = new SchemeDarcula();
-                break;
+                case 2:
+                    scheme = new SchemeEclipse();
+                    break;
 
-            case 4:
-                scheme = new SchemeVS2019();
-                break;
+                case 3:
+                    scheme = new SchemeDarcula();
+                    break;
 
-            case 5:
-                scheme = new SchemeNotepadXX();
-                break;
+                case 4:
+                    scheme = new SchemeVS2019();
+                    break;
+
+                case 5:
+                    scheme = new SchemeNotepadXX();
+                    break;
+            }
         }
 
         ed.setColorScheme(scheme);
@@ -167,164 +178,6 @@ public class SrcCodeEditor extends AppCompatActivity {
         }
     }
 
-    public static String j(String codeString) {
-        StringBuilder formattedCode = new StringBuilder(4096);
-        char[] code = codeString.toCharArray();
-        boolean var5 = false;
-        boolean var6 = false;
-        boolean var7 = false;
-        int var8 = 0;
-        boolean var9 = false;
-
-        int var19;
-        int index = 0;
-        for (boolean var10 = false; index < code.length; index = var19) {
-            int var13;
-            boolean var14;
-            boolean var15;
-            boolean var16;
-            boolean var17;
-            int var18;
-            label82:
-            {
-                char codeBit = code[index];
-                if (var5) {
-                    if (codeBit == '\n') {
-                        formattedCode.append(codeBit);
-                        a(formattedCode, var8);
-                        var5 = false;
-                    } else {
-                        formattedCode.append(codeBit);
-                    }
-                } else if (var6) {
-                    label79:
-                    {
-                        if (codeBit == '*') {
-                            int var40 = index + 1;
-                            char var41 = code[var40];
-                            if (var41 == '/') {
-                                formattedCode.append(codeBit);
-                                formattedCode.append(var41);
-                                index = var40;
-                                var6 = false;
-                                break label79;
-                            }
-                        }
-
-                        formattedCode.append(codeBit);
-
-                        // Add indents for commented lines
-                        if (codeBit == '\n') {
-                            a(formattedCode, var8);
-                        }
-                    }
-                } else if (var7) {
-                    formattedCode.append(codeBit);
-                    var7 = false;
-                } else if (codeBit == '\\') {
-                    formattedCode.append(codeBit);
-                    var7 = true;
-                } else if (var9) {
-                    if (codeBit == '\'') {
-                        formattedCode.append(codeBit);
-                        var9 = false;
-                    } else {
-                        formattedCode.append(codeBit);
-                    }
-                } else if (var10) {
-                    if (codeBit == '\"') {
-                        formattedCode.append(codeBit);
-                        var10 = false;
-                    } else {
-                        formattedCode.append(codeBit);
-                    }
-                } else {
-                    label88:
-                    {
-                        if (codeBit == '/') {
-                            int var27 = index + 1;
-                            char var28 = code[var27];
-                            if (var28 == '/') {
-                                formattedCode.append(codeBit);
-                                formattedCode.append(var28);
-                                var5 = true;
-                                index = var27;
-                                break label88;
-                            }
-
-                            if (var28 == '*') {
-                                formattedCode.append(codeBit);
-                                formattedCode.append(var28);
-                                var6 = true;
-                                index = var27;
-                                break label88;
-                            }
-                        }
-
-                        if (codeBit != '\n') {
-                            boolean var20;
-                            if (codeBit == '\'') {
-                                var20 = true;
-                            } else {
-                                var20 = var9;
-                            }
-
-                            boolean var21;
-                            if (codeBit == '\"') {
-                                var21 = true;
-                            } else {
-                                var21 = var10;
-                            }
-
-                            int var22;
-                            if (codeBit == '{') {
-                                var22 = var8 + 1;
-                            } else {
-                                var22 = var8;
-                            }
-
-                            if (codeBit == '}') {
-                                var22--;
-                                if (formattedCode.charAt(-1 + formattedCode.length()) == '\t') {
-                                    formattedCode.deleteCharAt(-1 + formattedCode.length());
-                                }
-                            }
-
-                            formattedCode.append(codeBit);
-                            var18 = var22;
-                            var10 = var21;
-                            var13 = index;
-                            var14 = var5;
-                            var15 = var6;
-                            var16 = var7;
-                            var17 = var20;
-                            break label82;
-                        }
-
-                        formattedCode.append(codeBit);
-                        a(formattedCode, var8);
-                    }
-                }
-
-                var13 = index;
-                var14 = var5;
-                var15 = var6;
-                var16 = var7;
-                var17 = var9;
-                var18 = var8;
-            }
-
-            var19 = var13 + 1;
-            var8 = var18;
-            var9 = var17;
-            var7 = var16;
-            var6 = var15;
-            var5 = var14;
-        }
-
-        return formattedCode.toString();
-    }
-
     public static String paste(Activity act) {
         ClipboardManager clipboard = (ClipboardManager) act.getSystemService(Context.CLIPBOARD_SERVICE);
 
@@ -357,7 +210,8 @@ public class SrcCodeEditor extends AppCompatActivity {
     private void initializeLogic() {
         toolbar.setVisibility(View.GONE);
 
-        setTitle(getIntent().getStringExtra("title"));
+        String title = getIntent().getStringExtra("title");
+        setTitle(title);
 
         editor.setTypefaceText(Typeface.MONOSPACE);
 
@@ -365,11 +219,14 @@ public class SrcCodeEditor extends AppCompatActivity {
 
         editor.setText(beforeContent);
 
-        if (getIntent().getStringExtra("title").endsWith(".java")) {
+        if (title.endsWith(".java")) {
             editor.setEditorLanguage(new JavaLanguage());
-        } else if (getIntent().getStringExtra("title").endsWith(".kt")) {
-            SketchwareUtil.toastError("Kotlin syntax highlighting yet to be added");
-            editor.setEditorLanguage(new JavaLanguage());
+        } else if (title.endsWith(".kt")) {
+            editor.setEditorLanguage(CodeEditorLanguages.KOTLIN);
+            editor.setColorScheme(CodeEditorColorSchemes.DRACULA);
+        } else if (title.endsWith(".xml")) {
+            editor.setEditorLanguage(CodeEditorLanguages.XML);
+            editor.setColorScheme(CodeEditorColorSchemes.DRACULA);
         }
 
         loadCESettings(this, editor, "act");
@@ -462,7 +319,7 @@ public class SrcCodeEditor extends AppCompatActivity {
                     String ss = b.toString();
 
                     try {
-                        ss = j(ss);
+                        ss = Lx.j(ss, true);
                     } catch (Exception e) {
                         err = true;
                         SketchwareUtil.toastError("Your code contains incorrectly nested parentheses");

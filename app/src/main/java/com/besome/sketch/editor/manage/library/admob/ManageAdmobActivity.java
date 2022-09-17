@@ -45,6 +45,7 @@ public class ManageAdmobActivity extends BaseAppCompatActivity implements View.O
     private TextView tvInterName;
     private TextView tvInterId;
     private ProjectLibraryBean admobLibraryBean;
+    private String sc_id;
 
     private void initializeLibrary(ProjectLibraryBean libraryBean) {
         admobLibraryBean = libraryBean;
@@ -165,6 +166,12 @@ public class ManageAdmobActivity extends BaseAppCompatActivity implements View.O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.manage_library_manage_admob);
 
+        if (savedInstanceState == null) {
+            sc_id = getIntent().getStringExtra("sc_id");
+        } else {
+            sc_id = savedInstanceState.getString("sc_id");
+        }
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         a(toolbar);
         findViewById(R.id.layout_main_logo).setVisibility(View.GONE);
@@ -222,6 +229,12 @@ public class ManageAdmobActivity extends BaseAppCompatActivity implements View.O
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putString("sc_id", sc_id);
+        super.onSaveInstanceState(outState);
+    }
+
     private void configureLibrary() {
         final aB dialog = new aB(this);
         dialog.a(R.drawable.delete_96);
@@ -259,6 +272,7 @@ public class ManageAdmobActivity extends BaseAppCompatActivity implements View.O
     private void toAdmobActivity() {
         Intent intent = new Intent(getApplicationContext(), AdmobActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.putExtra("sc_id", sc_id);
         intent.putExtra("admob", admobLibraryBean);
         startActivityForResult(intent, 236);
     }
