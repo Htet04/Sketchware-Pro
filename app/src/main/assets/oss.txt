@@ -13,10 +13,11 @@ We are deeply grateful to these developers for their work and contributions.
 	https://spring.io
 	Copyright (c) 2013-2014 Pivotal Software, Inc
 
-* Eclipse
+* Eclipse Java compiler
 
 	https://www.eclipse.org
 	Eclipse Public License Version 1.0
+	No changes to v3.13.0
 
 * Android Open Source Project
 
@@ -108,6 +109,30 @@ Libraries added with Sketchware Pro
     https://github.com/Iyxan23/zipalign-java
     MIT License
     No changes made to v1.0 (revision 942d4351a1b0a42a09a5137b6054e1b6d193fc60)
+
+* bundletool
+
+	https://github.com/google/bundletool
+	Apache-2.0 License
+	No changes made to v1.11.2
+
+* OkHttp
+
+	https://github.com/square/okhttp/tree/okhttp_4.10.x
+	Apache-2.0 License
+	No changes made to v4.10.0
+
+	* Okio
+
+		https://github.com/square/okio
+		Apache-2.0 License
+		No changes made to v3.1.0
+
+* Eclipse Java Compiler
+
+	https://www.eclipse.org
+	Eclipse Public License Version 1.0
+	No changes to v3.26.0
 
 
 Full license texts

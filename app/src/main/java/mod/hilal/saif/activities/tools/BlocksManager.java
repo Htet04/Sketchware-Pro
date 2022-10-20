@@ -1,5 +1,7 @@
 package mod.hilal.saif.activities.tools;
 
+import static mod.SketchwareUtil.dpToPx;
+
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.res.ColorStateList;
@@ -32,17 +34,18 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.sketchware.remod.R;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
 import a.a.a.Zx;
+import a.a.a.aB;
 import mod.SketchwareUtil;
 import mod.agus.jcoderz.lib.FileUtil;
 import mod.hey.studios.editor.manage.block.v2.BlockLoader;
 import mod.hey.studios.util.Helper;
 import mod.hilal.saif.lib.PCP;
-import mod.jbk.util.LogUtil;
 
 public class BlocksManager extends AppCompatActivity {
 
@@ -74,45 +77,73 @@ public class BlocksManager extends AppCompatActivity {
     private void initialize() {
         FloatingActionButton _fab = findViewById(R.id.fab);
         listview1 = findViewById(R.id.list_pallete);
-        ImageView back_icon = findViewById(R.id.back_icon);
-        ImageView arrange_icon = findViewById(R.id.dirs);
+        ImageView back = findViewById(R.id.ig_toolbar_back);
+        TextView title = findViewById(R.id.tx_toolbar_title);
+        ImageView settings = findViewById(R.id.ig_toolbar_load_file);
         card2 = findViewById(R.id.recycle_bin);
         card2_sub = findViewById(R.id.recycle_sub);
 
-        back_icon.setOnClickListener(Helper.getBackPressedClickListener(this));
+        back.setOnClickListener(Helper.getBackPressedClickListener(this));
+        Helper.applyRippleToToolbarView(back);
+        title.setText("Block manager");
+        settings.setVisibility(View.VISIBLE);
+        settings.setImageResource(R.drawable.settings_96_white);
+        Helper.applyRippleToToolbarView(settings);
+        settings.setOnClickListener(v -> {
+            aB dialog = new aB(this);
+            dialog.a(R.drawable.ic_folder_48dp);
+            dialog.b("Block configuration");
 
-        arrange_icon.setOnClickListener(v -> {
-            final AlertDialog dialog = new AlertDialog.Builder(BlocksManager.this).create();
-            LayoutInflater inflater = getLayoutInflater();
-            final View convertView = inflater.inflate(R.layout.settings_popup, null);
-            dialog.setView(convertView);
-            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            final EditText pallet = convertView.findViewById(R.id.pallet_dir);
-            pallet.setText(pallet_dir.replace(FileUtil.getExternalStorageDir(), ""));
-            final EditText block = convertView.findViewById(R.id.blocks_dir);
-            block.setText(blocks_dir.replace(FileUtil.getExternalStorageDir(), ""));
-            final TextInputLayout extra = convertView.findViewById(R.id.extra_input_layout);
-            extra.setVisibility(View.GONE);
-            final TextView save = convertView.findViewById(R.id.save);
-            final TextView cancel = convertView.findViewById(R.id.cancel);
-            final TextView de = convertView.findViewById(R.id.defaults);
-            save.setOnClickListener(saveView -> {
+            LinearLayout.LayoutParams defaultParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            LinearLayout customView = new LinearLayout(this);
+            customView.setLayoutParams(defaultParams);
+            customView.setOrientation(LinearLayout.VERTICAL);
+
+            TextInputLayout tilPalettesPath = new TextInputLayout(this);
+            tilPalettesPath.setLayoutParams(defaultParams);
+            tilPalettesPath.setOrientation(LinearLayout.VERTICAL);
+            tilPalettesPath.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
+            tilPalettesPath.setHint("JSON file with palettes");
+            customView.addView(tilPalettesPath);
+
+            EditText palettesPath = new EditText(this);
+            palettesPath.setLayoutParams(defaultParams);
+            palettesPath.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+            palettesPath.setTextSize(14);
+            palettesPath.setText(pallet_dir.replace(FileUtil.getExternalStorageDir(), ""));
+            tilPalettesPath.addView(palettesPath);
+
+            TextInputLayout tilBlocksPath = new TextInputLayout(this);
+            tilBlocksPath.setLayoutParams(defaultParams);
+            tilBlocksPath.setOrientation(LinearLayout.VERTICAL);
+            tilBlocksPath.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
+            tilBlocksPath.setHint("JSON file with blocks");
+            customView.addView(tilBlocksPath);
+
+            EditText blocksPath = new EditText(this);
+            blocksPath.setLayoutParams(defaultParams);
+            blocksPath.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+            blocksPath.setTextSize(14);
+            blocksPath.setText(blocks_dir.replace(FileUtil.getExternalStorageDir(), ""));
+            tilBlocksPath.addView(blocksPath);
+
+            dialog.a(customView);
+            dialog.b(Helper.getResString(R.string.common_word_save), view -> {
                 ConfigActivity.setSetting(ConfigActivity.SETTING_BLOCKMANAGER_DIRECTORY_PALETTE_FILE_PATH,
-                        pallet.getText().toString());
+                        palettesPath.getText().toString());
                 ConfigActivity.setSetting(ConfigActivity.SETTING_BLOCKMANAGER_DIRECTORY_BLOCK_FILE_PATH,
-                        block.getText().toString());
+                        blocksPath.getText().toString());
 
                 _readSettings();
                 _refresh_list();
                 dialog.dismiss();
             });
-            cancel.setOnClickListener(Helper.getDialogDismissListener(dialog));
-            de.setOnClickListener(defaultsView -> {
+            dialog.a(Helper.getResString(R.string.common_word_cancel), Helper.getDialogDismissListener(dialog));
+            dialog.configureDefaultButton("Defaults", view -> {
                 ConfigActivity.setSetting(ConfigActivity.SETTING_BLOCKMANAGER_DIRECTORY_PALETTE_FILE_PATH,
-                        "/.sketchware/resources/block/My Block/palette.json");
+                        ConfigActivity.getDefaultValue(ConfigActivity.SETTING_BLOCKMANAGER_DIRECTORY_PALETTE_FILE_PATH));
                 ConfigActivity.setSetting(ConfigActivity.SETTING_BLOCKMANAGER_DIRECTORY_BLOCK_FILE_PATH,
-                        "/.sketchware/resources/block/My Block/block.json");
+                        ConfigActivity.getDefaultValue(ConfigActivity.SETTING_BLOCKMANAGER_DIRECTORY_BLOCK_FILE_PATH));
 
                 _readSettings();
                 _refresh_list();
@@ -144,7 +175,7 @@ public class BlocksManager extends AppCompatActivity {
                     _createPallette(name.getText().toString(), colour.getText().toString());
                     insert_n = -1;
                     dialog.dismiss();
-                } catch (IllegalArgumentException e) {
+                } catch (IllegalArgumentException | StringIndexOutOfBoundsException e) {
                     colour.setError("Malformed hexadecimal color");
                     colour.requestFocus();
                 }
@@ -186,17 +217,23 @@ public class BlocksManager extends AppCompatActivity {
 
     private void _readSettings() {
         pallet_dir = FileUtil.getExternalStorageDir() + ConfigActivity.getStringSettingValueOrSetAndGet(ConfigActivity.SETTING_BLOCKMANAGER_DIRECTORY_PALETTE_FILE_PATH,
-                "/.sketchware/resources/block/My Block/palette.json");
+                (String) ConfigActivity.getDefaultValue(ConfigActivity.SETTING_BLOCKMANAGER_DIRECTORY_PALETTE_FILE_PATH));
         blocks_dir = FileUtil.getExternalStorageDir() + ConfigActivity.getStringSettingValueOrSetAndGet(ConfigActivity.SETTING_BLOCKMANAGER_DIRECTORY_BLOCK_FILE_PATH,
-                "/.sketchware/resources/block/My Block/block.json");
+                (String) ConfigActivity.getDefaultValue(ConfigActivity.SETTING_BLOCKMANAGER_DIRECTORY_BLOCK_FILE_PATH));
 
         if (FileUtil.isExistFile(blocks_dir)) {
             try {
                 all_blocks_list = new Gson().fromJson(FileUtil.readFile(blocks_dir), Helper.TYPE_MAP_LIST);
+
+                if (all_blocks_list != null) {
+                    return;
+                }
+                // fall-through to shared handler
             } catch (JsonParseException e) {
-                SketchwareUtil.toastError("Failed to parse " + blocks_dir + ", using none.");
-                LogUtil.e("BlocksManager", "Failed to parse " + blocks_dir, e);
+                // fall-through to shared handler
             }
+
+            SketchwareUtil.showFailedToParseJsonDialog(this, new File(blocks_dir), "Custom Blocks", v -> _readSettings());
         }
     }
 
@@ -292,7 +329,7 @@ public class BlocksManager extends AppCompatActivity {
                 Color.parseColor(colour.getText().toString());
                 _editPallete(_p, name.getText().toString(), colour.getText().toString());
                 dialog.dismiss();
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException | StringIndexOutOfBoundsException e) {
                 colour.setError("Malformed hexadecimal color");
                 colour.requestFocus();
             }
@@ -363,7 +400,7 @@ public class BlocksManager extends AppCompatActivity {
                 Color.parseColor(colour.getText().toString());
                 _createPallette(name.getText().toString(), colour.getText().toString());
                 dialog.dismiss();
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException | StringIndexOutOfBoundsException e) {
                 colour.setError("Malformed hexadecimal color");
                 colour.requestFocus();
             }
@@ -508,7 +545,17 @@ public class BlocksManager extends AppCompatActivity {
             title.setText(pallet_listmap.get(position).get("name").toString());
             sub.setText("Blocks: " + (long) (_getN(position + 9)));
             card2_sub.setText("Blocks: " + (long) (_getN(-1)));
-            color.setBackgroundColor(Color.parseColor((String) palettes.get(position).get("color")));
+
+            int backgroundColor;
+            String paletteColorValue = (String) palettes.get(position).get("color");
+            try {
+                backgroundColor = Color.parseColor(paletteColorValue);
+            } catch (IllegalArgumentException | StringIndexOutOfBoundsException e) {
+                SketchwareUtil.toastError("Invalid background color '" + paletteColorValue + "' in Palette #" + (position + 1));
+                backgroundColor = Color.WHITE;
+            }
+            color.setBackgroundColor(backgroundColor);
+
             _a(background);
             background.setOnLongClickListener(v -> {
                 final String moveUp = "Move up";

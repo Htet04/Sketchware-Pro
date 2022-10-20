@@ -210,49 +210,49 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
         }
     }
 
-    public final void A() {
-        ArrayList<BlockBean> a2 = jC.a(this.B).a(this.M.getJavaName(), this.C + "_" + this.D);
-        if (a2 != null) {
-            if (a2.size() == 0) {
+    private void loadEventBlocks() {
+        ArrayList<BlockBean> eventBlocks = jC.a(this.B).a(this.M.getJavaName(), this.C + "_" + this.D);
+        if (eventBlocks != null) {
+            if (eventBlocks.size() == 0) {
                 e(this.X);
             }
 
-            boolean z = true;
-            HashMap<Integer, Rs> hashMap = new HashMap<>();
-            for (BlockBean next : a2) {
+            boolean needToFindRoot = true;
+            HashMap<Integer, Rs> blockIdsAndBlocks = new HashMap<>();
+            for (BlockBean next : eventBlocks) {
                 if (this.D.equals("onTextChanged") && next.opCode.equals("getArg") && next.spec.equals("text")) {
                     next.spec = "charSeq";
                 }
                 Rs b2 = b(next);
-                hashMap.put((Integer) b2.getTag(), b2);
+                blockIdsAndBlocks.put((Integer) b2.getTag(), b2);
                 o.g = Math.max(o.g, (Integer) b2.getTag() + 1);
                 this.o.a(b2, 0, 0);
                 b2.setOnTouchListener(this);
-                if (z) {
+                if (needToFindRoot) {
                     this.o.getRoot().b(b2);
-                    z = false;
+                    needToFindRoot = false;
                 }
             }
-            for (BlockBean next2 : a2) {
-                Rs block = hashMap.get(Integer.valueOf(next2.id));
+            for (BlockBean next2 : eventBlocks) {
+                Rs block = blockIdsAndBlocks.get(Integer.valueOf(next2.id));
                 if (block != null) {
                     Rs subStack1RootBlock;
-                    if (next2.subStack1 >= 0 && (subStack1RootBlock = hashMap.get(next2.subStack1)) != null) {
+                    if (next2.subStack1 >= 0 && (subStack1RootBlock = blockIdsAndBlocks.get(next2.subStack1)) != null) {
                         block.e(subStack1RootBlock);
                     }
                     Rs subStack2RootBlock;
-                    if (next2.subStack2 >= 0 && (subStack2RootBlock = hashMap.get(next2.subStack2)) != null) {
+                    if (next2.subStack2 >= 0 && (subStack2RootBlock = blockIdsAndBlocks.get(next2.subStack2)) != null) {
                         block.f(subStack2RootBlock);
                     }
                     Rs nextBlock;
-                    if (next2.nextBlock >= 0 && (nextBlock = hashMap.get(next2.nextBlock)) != null) {
+                    if (next2.nextBlock >= 0 && (nextBlock = blockIdsAndBlocks.get(next2.nextBlock)) != null) {
                         block.b(nextBlock);
                     }
                     for (int i = 0; i < next2.parameters.size(); i++) {
                         String parameter = next2.parameters.get(i);
                         if (parameter != null && parameter.length() > 0) {
                             if (parameter.charAt(0) == '@') {
-                                Rs parameterBlock = hashMap.get(Integer.valueOf(parameter.substring(1)));
+                                Rs parameterBlock = blockIdsAndBlocks.get(Integer.valueOf(parameter.substring(1)));
                                 if (parameterBlock != null) {
                                     block.a((Ts) block.V.get(i), parameterBlock);
                                 }
@@ -930,7 +930,7 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
                                 if (ss.b.equals("m")) {
                                     switch (ss.c) {
                                         case "varInt":
-                                            jC.a(B).f(javaName, ExtraMenuBean.VARIABLE_TYPE_INTEGER, parameter);
+                                            jC.a(B).f(javaName, ExtraMenuBean.VARIABLE_TYPE_NUMBER, parameter);
                                             break;
 
                                         case "varBool":
@@ -942,7 +942,7 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
                                             break;
 
                                         case "listInt":
-                                            jC.a(B).e(javaName, ExtraMenuBean.LIST_TYPE_INTEGER, parameter);
+                                            jC.a(B).e(javaName, ExtraMenuBean.LIST_TYPE_NUMBER, parameter);
                                             break;
 
                                         case "listStr":
@@ -954,7 +954,7 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
                                             break;
 
                                         case "list":
-                                            boolean b = jC.a(B).e(javaName, ExtraMenuBean.LIST_TYPE_INTEGER, parameter);
+                                            boolean b = jC.a(B).e(javaName, ExtraMenuBean.LIST_TYPE_NUMBER, parameter);
                                             if (!b) {
                                                 b = jC.a(B).e(javaName, ExtraMenuBean.LIST_TYPE_STRING, parameter);
                                             }
@@ -2028,8 +2028,9 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
         }
         dialog.a(customView);
         dialog.b(xB.b().a(getApplicationContext(), R.string.common_word_select), v -> {
-            RadioButton checkedRadioButton = (RadioButton) radioGroup.getChildAt(radioGroup.getCheckedRadioButtonId());
+            RadioButton checkedRadioButton = radioGroup.findViewById(radioGroup.getCheckedRadioButtonId());
             a(ss, (Object) checkedRadioButton.getText().toString());
+            dialog.dismiss();
         });
         dialog.a(xB.b().a(getApplicationContext(), R.string.common_word_cancel), Helper.getDialogDismissListener(dialog));
         dialog.show();
@@ -2294,44 +2295,43 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
     }
 
     @Override
-    public void onClick(View view) {
-        if (mB.a()) {
-            return;
-        }
-        if (view.getTag() != null) {
-            if (view.getTag().equals("variableAdd")) {
-                showAddNewVariableDialog();
-            } else if (view.getTag().equals("variableRemove")) {
-                K();
-            } else if (view.getTag().equals("listAdd")) {
-                G();
-            } else if (view.getTag().equals("listRemove")) {
-                J();
-            } else if (view.getTag().equals("blockAdd")) {
-                Intent intent = new Intent(getApplicationContext(), MakeBlockActivity.class);
-                intent.putExtra("sc_id", this.B);
-                intent.putExtra("project_file", this.M);
-                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivityForResult(intent, 222);
-            } else if (view.getTag().equals("componentAdd")) {
-                Intent intent = new Intent(getApplicationContext(), ComponentAddActivity.class);
-                intent.putExtra("sc_id", this.B);
-                intent.putExtra("project_file", this.M);
-                intent.putExtra("filename", this.M.getJavaName());
-                startActivityForResult(intent, 224);
-            } else if (view.getTag().equals("blockImport")) {
-                I();
+    public void onClick(View v) {
+        if (!mB.a()) {
+            Object tag = v.getTag();
+            if (tag != null) {
+                if (tag.equals("variableAdd")) {
+                    showAddNewVariableDialog();
+                } else if (tag.equals("variableRemove")) {
+                    K();
+                } else if (tag.equals("listAdd")) {
+                    G();
+                } else if (tag.equals("listRemove")) {
+                    J();
+                } else if (tag.equals("blockAdd")) {
+                    Intent intent = new Intent(getApplicationContext(), MakeBlockActivity.class);
+                    intent.putExtra("sc_id", this.B);
+                    intent.putExtra("project_file", this.M);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivityForResult(intent, 222);
+                } else if (tag.equals("componentAdd")) {
+                    Intent intent = new Intent(getApplicationContext(), ComponentAddActivity.class);
+                    intent.putExtra("sc_id", this.B);
+                    intent.putExtra("project_file", this.M);
+                    intent.putExtra("filename", this.M.getJavaName());
+                    startActivityForResult(intent, 224);
+                } else if (tag.equals("blockImport")) {
+                    I();
+                }
+            }
+            int id = v.getId();
+            if (id == R.id.btn_accept) {
+                setResult(Activity.RESULT_OK, new Intent());
+                finish();
+            } else if (id == R.id.btn_cancel) {
+                setResult(Activity.RESULT_CANCELED);
+                finish();
             }
         }
-        int id = view.getId();
-        if (id == R.id.btn_accept) {
-            setResult(Activity.RESULT_OK, new Intent());
-        } else if (id != R.id.btn_cancel) {
-            return;
-        } else {
-            setResult(0);
-        }
-        finish();
     }
 
     @Override
@@ -2450,62 +2450,56 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
     @Override
     public void onPostCreate(Bundle bundle) {
         super.onPostCreate(bundle);
-        String var2;
-        String var8;
+
+        String title;
         if (this.D.equals("moreBlock")) {
-            var2 = jC.a(this.B).b(this.M.getJavaName(), this.C);
-            var8 = xB.b().a(this.getApplicationContext(), R.string.root_spec_common_define) + " " + ReturnMoreblockManager.getLogicEditorTitle(var2);
+            title = xB.b().a(this.getApplicationContext(), R.string.root_spec_common_define) + " " + ReturnMoreblockManager.getLogicEditorTitle(jC.a(this.B).b(this.M.getJavaName(), this.C));
         } else if (this.C.equals("_fab")) {
-            var8 = xB.b().a(this.getApplicationContext(), "fab", this.D);
+            title = xB.b().a(this.getApplicationContext(), "fab", this.D);
         } else {
-            var8 = xB.b().a(this.getApplicationContext(), this.C, this.D);
+            title = xB.b().a(this.getApplicationContext(), this.C, this.D);
         }
+        this.E = title;
 
-        this.E = var8;
         this.o.a(this.E, this.D);
-        ArrayList<String> var10 = FB.c(this.E);
-        int var4 = 0;
 
-        int var6;
-        for (int var5 = 0; var4 < var10.size(); var5 = var6) {
-            var2 = var10.get(var4);
-            var6 = var5;
-            if (var2.charAt(0) == '%') {
+        ArrayList<String> spec = FB.c(this.E);
+        int blockId = 0;
+        for (int i = 0; i < spec.size(); i++) {
+            String specBit = spec.get(i);
+            if (specBit.charAt(0) == '%') {
                 label44:
                 {
-                    Rs var9;
-                    if (var2.charAt(1) == 'b') {
-                        var9 = new Rs(super.e, var5 + 1, var2.substring(3), "b", "getArg");
-                    } else if (var2.charAt(1) == 'd') {
-                        var9 = new Rs(super.e, var5 + 1, var2.substring(3), "d", "getArg");
-                    } else if (var2.charAt(1) == 's') {
-                        var9 = new Rs(super.e, var5 + 1, var2.substring(3), "s", "getArg");
+                    Rs block;
+                    if (specBit.charAt(1) == 'b') {
+                        block = new Rs(super.e, blockId + 1, specBit.substring(3), "b", "getArg");
+                    } else if (specBit.charAt(1) == 'd') {
+                        block = new Rs(super.e, blockId + 1, specBit.substring(3), "d", "getArg");
+                    } else if (specBit.charAt(1) == 's') {
+                        block = new Rs(super.e, blockId + 1, specBit.substring(3), "s", "getArg");
                     } else {
-                        if (var2.charAt(1) != 'm') {
+                        if (specBit.charAt(1) != 'm') {
                             break label44;
                         }
 
-                        var8 = var2.substring(var2.lastIndexOf(".") + 1);
-                        String var7 = var2.substring(var2.indexOf(".") + 1, var2.lastIndexOf("."));
-                        var2 = kq.a(var7);
-                        var9 = new Rs(super.e, var5 + 1, var8, var2, kq.b(var7), "getArg");
+                        String selector = specBit.substring(specBit.indexOf(".") + 1, specBit.lastIndexOf("."));
+                        String type = kq.a(selector);
+                        block = new Rs(super.e, blockId + 1, specBit.substring(specBit.lastIndexOf(".") + 1), type, kq.b(selector), "getArg");
                     }
 
-                    var9.setBlockType(1);
-                    this.o.addView(var9);
-                    this.o.getRoot().a((Ts) this.o.getRoot().V.get(var5), var9);
-                    var9.setOnTouchListener(this);
-                    var6 = var5 + 1;
+                    block.setBlockType(1);
+                    this.o.addView(block);
+                    this.o.getRoot().a((Ts) this.o.getRoot().V.get(blockId), block);
+                    block.setOnTouchListener(this);
+                    blockId++;
                 }
             }
-
-            ++var4;
         }
 
         this.o.getRoot().k();
         this.g(this.getResources().getConfiguration().orientation);
         this.a(0, 0xffee7d16);
-        this.A();
+        this.loadEventBlocks();
         this.z();
     }
 

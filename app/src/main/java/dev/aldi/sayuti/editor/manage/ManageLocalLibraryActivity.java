@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -21,21 +22,21 @@ import com.sketchware.remod.R;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
-import a.a.a.bB;
+import mod.SketchwareUtil;
 import mod.agus.jcoderz.lib.FileUtil;
 import mod.hey.studios.project.library.LibraryDownloader;
 import mod.hey.studios.util.Helper;
 
 public class ManageLocalLibraryActivity extends Activity implements View.OnClickListener, LibraryDownloader.OnCompleteListener {
 
-    private final ArrayList<HashMap<String, Object>> main_list = new ArrayList<>();
-    private String sc_id = "";
+    private boolean notAssociatedWithProject = false;
     private ListView listview;
     private String local_lib_file = "";
     private String local_libs_path = "";
     private ArrayList<HashMap<String, Object>> lookup_list = new ArrayList<>();
-    private int n = 0;
     private ArrayList<HashMap<String, Object>> project_used_libs = new ArrayList<>();
 
     private void initToolbar() {
@@ -74,59 +75,62 @@ public class ManageLocalLibraryActivity extends Activity implements View.OnClick
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.manage_permission);
-        if (getIntent().hasExtra("sc_id")) {
-            sc_id = getIntent().getStringExtra("sc_id");
-        }
+
         listview = findViewById(R.id.main_content);
         findViewById(R.id.managepermissionLinearLayout1).setVisibility(View.GONE);
         initToolbar();
+
+        if (getIntent().hasExtra("sc_id")) {
+            String sc_id = getIntent().getStringExtra("sc_id");
+            notAssociatedWithProject = sc_id.equals("system");
+            local_lib_file = FileUtil.getExternalStorageDir().concat("/.sketchware/data/").concat(sc_id.concat("/local_library"));
+        }
+        local_libs_path = FileUtil.getExternalStorageDir().concat("/.sketchware/libs/local_libs/");
         loadFiles();
     }
 
     private void loadFiles() {
-        main_list.clear();
         project_used_libs.clear();
         lookup_list.clear();
-        local_libs_path = FileUtil.getExternalStorageDir().concat("/.sketchware/libs/local_libs/");
-        local_lib_file = FileUtil.getExternalStorageDir().concat("/.sketchware/data/").concat(sc_id.concat("/local_library"));
-        if (!FileUtil.isExistFile(local_lib_file) || FileUtil.readFile(local_lib_file).equals("")) {
-            FileUtil.writeFile(local_lib_file, "[]");
-        } else {
-            project_used_libs = new Gson().fromJson(FileUtil.readFile(local_lib_file), Helper.TYPE_MAP_LIST);
+        if (!notAssociatedWithProject) {
+            String fileContent;
+            if (!FileUtil.isExistFile(local_lib_file) || (fileContent = FileUtil.readFile(local_lib_file)).equals("")) {
+                FileUtil.writeFile(local_lib_file, "[]");
+            } else {
+                project_used_libs = new Gson().fromJson(fileContent, Helper.TYPE_MAP_LIST);
+            }
         }
         ArrayList<String> arrayList = new ArrayList<>();
         FileUtil.listDir(local_libs_path, arrayList);
         //noinspection Java8ListSort
         Collections.sort(arrayList, String.CASE_INSENSITIVE_ORDER);
-        n = 0;
-        while (n < arrayList.size()) {
-            if (FileUtil.isDirectory(arrayList.get(n))) {
-                HashMap<String, Object> hashMap = new HashMap<>();
-                hashMap.put("name", Uri.parse(arrayList.get(n)).getLastPathSegment());
-                main_list.add(hashMap);
+
+        List<String> localLibraryNames = new LinkedList<>();
+        for (String filename : arrayList) {
+            if (FileUtil.isDirectory(filename)) {
+                localLibraryNames.add(Uri.parse(filename).getLastPathSegment());
             }
-            n++;
         }
-        listview.setAdapter(new LibraryAdapter(main_list));
+        listview.setAdapter(new LibraryAdapter(localLibraryNames));
         ((BaseAdapter) listview.getAdapter()).notifyDataSetChanged();
     }
 
     public class LibraryAdapter extends BaseAdapter {
 
-        ArrayList<HashMap<String, Object>> _data;
+        private final List<String> localLibraries;
 
-        public LibraryAdapter(ArrayList<HashMap<String, Object>> arrayList) {
-            _data = arrayList;
+        public LibraryAdapter(List<String> localLibraries) {
+            this.localLibraries = localLibraries;
         }
 
         @Override
-        public HashMap<String, Object> getItem(int position) {
-            return _data.get(position);
+        public String getItem(int position) {
+            return localLibraries.get(position);
         }
 
         @Override
         public int getCount() {
-            return _data.size();
+            return localLibraries.size();
         }
 
         @Override
@@ -137,63 +141,85 @@ public class ManageLocalLibraryActivity extends Activity implements View.OnClick
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             if (convertView == null) {
-                convertView = getLayoutInflater().inflate(R.layout.view_item_local_lib, null);
+                convertView = getLayoutInflater().inflate(R.layout.view_item_local_lib, parent, false);
             }
-            final CheckBox checkBox = convertView.findViewById(R.id.checkbox_content);
-            checkBox.setText((main_list.get(position)).get("name").toString());
-            checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                HashMap<String, Object> hashMap = new HashMap<>();
-                hashMap.put("name", checkBox.getText().toString());
-                if (FileUtil.isExistFile(local_libs_path.concat(checkBox.getText().toString()).concat("/config"))) {
-                    hashMap.put("packageName", FileUtil.readFile(local_libs_path.concat(checkBox.getText().toString()).concat("/config")));
+
+            final CheckBox enabled = convertView.findViewById(R.id.checkbox_content);
+            enabled.setText(localLibraries.get(position));
+            enabled.setOnClickListener(v -> {
+                String name = enabled.getText().toString();
+
+                String configPath = local_libs_path + name + "/config";
+                String resPath = local_libs_path + name + "/res";
+                String jarPath = local_libs_path + name + "/classes.jar";
+                String dexPath = local_libs_path + name + "/classes.dex";
+                String manifestPath = local_libs_path + name + "/AndroidManifest.xml";
+                String pgRulesPath = local_libs_path + name + "/proguard.txt";
+                String assetsPath = local_libs_path + name + "/assets";
+
+                HashMap<String, Object> localLibrary = new HashMap<>();
+                localLibrary.put("name", name);
+                if (FileUtil.isExistFile(configPath)) {
+                    localLibrary.put("packageName", FileUtil.readFile(configPath));
                 }
-                if (FileUtil.isExistFile(local_libs_path.concat(checkBox.getText().toString()).concat("/res"))) {
-                    hashMap.put("resPath", local_libs_path.concat(checkBox.getText().toString()).concat("/res"));
+                if (FileUtil.isExistFile(resPath)) {
+                    localLibrary.put("resPath", resPath);
                 }
-                if (FileUtil.isExistFile(local_libs_path.concat(checkBox.getText().toString()).concat("/classes.jar"))) {
-                    hashMap.put("jarPath", local_libs_path.concat(checkBox.getText().toString()).concat("/classes.jar"));
+                if (FileUtil.isExistFile(jarPath)) {
+                    localLibrary.put("jarPath", jarPath);
                 }
-                if (FileUtil.isExistFile(local_libs_path.concat(checkBox.getText().toString()).concat("/classes.dex"))) {
-                    hashMap.put("dexPath", local_libs_path.concat(checkBox.getText().toString()).concat("/classes.dex"));
+                if (FileUtil.isExistFile(dexPath)) {
+                    localLibrary.put("dexPath", dexPath);
                 }
-                if (FileUtil.isExistFile(local_libs_path.concat(checkBox.getText().toString()).concat("/AndroidManifest.xml"))) {
-                    hashMap.put("manifestPath", local_libs_path.concat(checkBox.getText().toString()).concat("/AndroidManifest.xml"));
+                if (FileUtil.isExistFile(manifestPath)) {
+                    localLibrary.put("manifestPath", manifestPath);
                 }
-                if (FileUtil.isExistFile(local_libs_path.concat(checkBox.getText().toString()).concat("/proguard.txt"))) {
-                    hashMap.put("pgRulesPath", local_libs_path.concat(checkBox.getText().toString()).concat("/proguard.txt"));
+                if (FileUtil.isExistFile(pgRulesPath)) {
+                    localLibrary.put("pgRulesPath", pgRulesPath);
                 }
-                if (FileUtil.isExistFile(local_libs_path.concat(checkBox.getText().toString()).concat("/assets"))) {
-                    hashMap.put("assetsPath", local_libs_path.concat(checkBox.getText().toString()).concat("/assets"));
+                if (FileUtil.isExistFile(assetsPath)) {
+                    localLibrary.put("assetsPath", assetsPath);
                 }
-                if (!isChecked) {
-                    project_used_libs.remove(hashMap);
-                } else {
-                    n = 0;
-                    while (n < project_used_libs.size()) {
-                        if (project_used_libs.get(n).get("name").toString().equals(checkBox.getText().toString())) {
-                            project_used_libs.remove(hashMap);
+                if (!enabled.isChecked()) {
+                    int i = -1;
+                    for (int j = 0; j < project_used_libs.size(); j++) {
+                        HashMap<String, Object> nLocalLibrary = project_used_libs.get(j);
+                        if (name.equals(nLocalLibrary.get("name"))) {
+                            i = j;
+                            break;
                         }
-                        n = n + 1;
                     }
-                    project_used_libs.add(hashMap);
+                    project_used_libs.remove(i);
+                } else {
+                    for (HashMap<String, Object> usedLibrary : project_used_libs) {
+                        if (usedLibrary.get("name").toString().equals(name)) {
+                            project_used_libs.remove(usedLibrary);
+                            break;
+                        }
+                    }
+                    project_used_libs.add(localLibrary);
                 }
                 FileUtil.writeFile(local_lib_file, new Gson().toJson(project_used_libs));
             });
-            lookup_list = new Gson().fromJson(FileUtil.readFile(local_lib_file), Helper.TYPE_MAP_LIST);
-            n = 0;
-            while (n < lookup_list.size()) {
-                checkBox.setChecked(false);
-                if (checkBox.getText().toString().equals(lookup_list.get(n).get("name").toString())) {
-                    checkBox.setChecked(true);
+
+            enabled.setChecked(false);
+            if (!notAssociatedWithProject) {
+                lookup_list = new Gson().fromJson(FileUtil.readFile(local_lib_file), Helper.TYPE_MAP_LIST);
+                for (HashMap<String, Object> localLibrary : lookup_list) {
+                    if (enabled.getText().toString().equals(localLibrary.get("name").toString())) {
+                        enabled.setChecked(true);
+                    }
                 }
-                n = n + 1;
+            } else {
+                enabled.setEnabled(false);
             }
+
             convertView.findViewById(R.id.img_delete).setOnClickListener(v -> {
                 PopupMenu popupMenu = new PopupMenu(ManageLocalLibraryActivity.this, v);
-                popupMenu.getMenu().add(0, 0, 0, "Delete");
+                popupMenu.getMenu().add(Menu.NONE, Menu.NONE, Menu.NONE, "Delete");
                 popupMenu.setOnMenuItemClickListener(menuItem -> {
-                    FileUtil.deleteFile(local_libs_path.concat(checkBox.getText().toString()));
-                    bB.a(ManageLocalLibraryActivity.this, "Deleted successfully", 0).show();
+                    FileUtil.deleteFile(local_libs_path.concat(enabled.getText().toString()));
+                    SketchwareUtil.toast("Deleted successfully");
                     loadFiles();
                     return true;
                 });

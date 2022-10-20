@@ -32,6 +32,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.sketchware.remod.R;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -84,8 +85,7 @@ public class BlocksManagerCreatorActivity extends AppCompatActivity {
 
     private void initialize() {
         ScrollView vscroll1 = findViewById(R.id.vscroll1);
-        ImageView backIcon = findViewById(R.id.back_ico);
-        pageTitle = findViewById(R.id.page_title);
+        pageTitle = findViewById(R.id.tx_toolbar_title);
         TextInputLayout nameLayout = findViewById(R.id.name_lay);
         name = findViewById(R.id.name);
         LinearLayout selectType = findViewById(R.id.select_type);
@@ -103,10 +103,9 @@ public class BlocksManagerCreatorActivity extends AppCompatActivity {
         MaterialButton save = findViewById(R.id.save);
         LinearLayout reset = findViewById(R.id.reset);
 
-        AlertDialog.Builder blockTypeDialog = new AlertDialog.Builder(this);
-
-        backIcon.setOnClickListener(Helper.getBackPressedClickListener(this));
-        Helper.applyRippleToToolbarView(backIcon);
+        ImageView back = findViewById(R.id.ig_toolbar_back);
+        back.setOnClickListener(Helper.getBackPressedClickListener(this));
+        Helper.applyRippleToToolbarView(back);
 
         name.addTextChangedListener(new BaseTextWatcher() {
             @Override
@@ -162,7 +161,7 @@ public class BlocksManagerCreatorActivity extends AppCompatActivity {
                     "Header (h)"
             );
             AtomicInteger choice = new AtomicInteger();
-            blockTypeDialog.setTitle("Block type")
+            new AlertDialog.Builder(this).setTitle("Block type")
                     .setSingleChoiceItems(choices.toArray(new String[0]),
                             types.indexOf(type.getText().toString()), (dialog, which) -> choice.set(which))
                     .setPositiveButton(R.string.common_word_save, (dialog, which) -> type.setText(types.get(choice.get())))
@@ -445,9 +444,11 @@ public class BlocksManagerCreatorActivity extends AppCompatActivity {
                 }
                 return;
             }
-        } catch (JsonParseException ignored) {
+            // fall-through to shared handler
+        } catch (JsonParseException e) {
+            // fall-through to shared handler
         }
-        SketchwareUtil.toastError("Invalid blocks file detected!");
+        SketchwareUtil.showFailedToParseJsonDialog(this, new File(path), "Custom Blocks", v -> getBlockList());
         blocksList = new ArrayList<>();
     }
 

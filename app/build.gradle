@@ -1,7 +1,7 @@
 plugins {
     id "com.android.application"
+    id "kotlin-android"
 }
-apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion 30
@@ -33,7 +33,7 @@ android {
 
         buildConfigField("String", "VERSION_NAME_WITHOUT_FLAVOR", "\"v6.4.0-SNAPSHOT-${getCommitHash()}\"")
 
-        buildConfigField("String", "CRASH_REPORT_WEBHOOK_URL", "\"https://discord.com/api/webhooks/1013129494237810701/RBnbEADfie4hYHOxnwSN703MeTZKqMtipE00X-EkSSS8wlo1tGcfY8gdD4j6Jm-cjflz\"")
+        buildConfigField("String", "CRASH_REPORT_WEBHOOK_URL", "\"${System.getenv("CRASH_REPORT_WEBHOOK_URL")}\"")
     }
 
     flavorDimensions "api"
@@ -105,7 +105,9 @@ dependencies {
     implementation "de.hdodenhof:circleimageview:3.1.0"
     implementation "com.github.angads25:filepicker:1.1.1"
 
-    minApi26Implementation "com.android.tools.build:bundletool:1.11.0"
+    minApi26Implementation "com.android.tools.build:bundletool:1.11.2"
+    //noinspection GradleDependency copied from above dependency for not just runtime access
+    minApi26Implementation "com.google.protobuf:protobuf-java:3.10.0"
     //noinspection GradleDependency
     implementation "com.android.tools:sdklib:25.3.0", { exclude group: "com.intellij", module: "annotations" }
     implementation "com.android.tools:r8:3.3.75"

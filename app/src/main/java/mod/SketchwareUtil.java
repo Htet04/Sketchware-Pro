@@ -12,8 +12,15 @@ import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.sketchware.remod.R;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -24,7 +31,11 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.function.Consumer;
 
+import a.a.a.aB;
 import a.a.a.bB;
+import a.a.a.mB;
+import mod.agus.jcoderz.lib.FileUtil;
+import mod.hey.studios.util.Helper;
 import mod.jbk.util.LogUtil;
 
 public class SketchwareUtil {
@@ -182,5 +193,49 @@ public class SketchwareUtil {
                 exceptionHandler.accept(e);
             }
         }).start();
+    }
+
+    /**
+     * @param componentLabel Label of component that failed to be parsed, e.g. Block selector menus
+     */
+    public static void showFailedToParseJsonDialog(Activity context, File json, String componentLabel, Consumer<Void> afterRenameLogic) {
+        aB dialog = new aB(context);
+        dialog.a(R.drawable.break_warning_96_red);
+        dialog.b("Couldn't get " + componentLabel);
+        dialog.a("Failed to parse " + componentLabel + " from file " + json + ". Fix by renaming old file to " + json.getName() + ".bak? " +
+                "If not, no " + componentLabel + " will be used.");
+        dialog.b("Rename", v -> {
+            FileUtil.renameFile(json.getAbsolutePath(), json.getAbsolutePath() + ".bak");
+            afterRenameLogic.accept(null);
+            dialog.dismiss();
+        });
+        dialog.a(Helper.getResString(R.string.common_word_cancel), Helper.getDialogDismissListener(dialog));
+        dialog.show();
+    }
+
+    public static void showAnErrorOccurredDialog(Activity activity, String errorMessage) {
+        aB dialog = new aB(activity);
+        dialog.a(R.drawable.break_warning_96_red);
+        dialog.b(Helper.getResString(R.string.common_error_an_error_occurred));
+
+        ScrollView scrollView = new ScrollView(activity);
+        scrollView.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        TextView errorMessageThingy = new TextView(activity);
+        errorMessageThingy.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        errorMessageThingy.setText(errorMessage);
+        scrollView.addView(errorMessageThingy);
+
+        dialog.a(scrollView);
+        dialog.b(Helper.getResString(R.string.common_word_ok), v -> {
+            if (!mB.a()) {
+                dialog.dismiss();
+            }
+        });
+        dialog.show();
     }
 }

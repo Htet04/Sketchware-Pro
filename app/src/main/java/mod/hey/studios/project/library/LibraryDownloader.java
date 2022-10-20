@@ -6,13 +6,13 @@ import android.app.ProgressDialog;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.android.tools.r8.D8;
 import com.google.gson.Gson;
@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import a.a.a.Dp;
 import a.a.a.bB;
 import mod.SketchwareUtil;
 import mod.agus.jcoderz.dx.command.dexer.Main;
@@ -42,6 +43,7 @@ import mod.hey.studios.lib.prdownloader.PRDownloader;
 import mod.hey.studios.lib.prdownloader.PRDownloader.OnDownloadListener;
 import mod.hey.studios.lib.prdownloader.PRDownloader.Status;
 import mod.hey.studios.util.Helper;
+import mod.jbk.build.BuildProgressReceiver;
 import mod.jbk.build.BuiltInLibraries;
 
 //changed in 6.3.0
@@ -64,7 +66,6 @@ public class LibraryDownloader {
     private String currentRepo = "";
     private int counter = 0;
     private ArrayList<HashMap<String, Object>> repoMap = new ArrayList<>();
-    private ProgressDialog progressDialog;
 
     public LibraryDownloader(Activity context, boolean use_d8) {
         this.context = context;
@@ -556,7 +557,7 @@ public class LibraryDownloader {
                     // fall-through to shared error toast
                 }
 
-                SketchwareUtil.toastError("Custom Repositories configuration file couldn't be read from. Using default repositories for now", Toast.LENGTH_LONG);
+                SketchwareUtil.showFailedToParseJsonDialog(context, CONFIGURED_REPOSITORIES_FILE, "Custom Repositories", v -> _getRepository());
             } else {
                 FileUtil.writeFile(CONFIGURED_REPOSITORIES_FILE.getAbsolutePath(), DEFAULT_REPOSITORIES_FILE_CONTENT);
             }
@@ -584,7 +585,8 @@ public class LibraryDownloader {
         void onComplete();
     }
 
-    private class BackTask extends AsyncTask<String, String, String> {
+    private class BackTask extends AsyncTask<String, String, String> implements BuildProgressReceiver {
+        private ProgressDialog progressDialog;
         boolean success = false;
 
         @Override
@@ -592,7 +594,6 @@ public class LibraryDownloader {
             super.onPreExecute();
             progressDialog = new ProgressDialog(context);
             progressDialog.setTitle("Please wait");
-            progressDialog.setMessage((use_d8 ? "D8" : "Dx") + " is running...");
             progressDialog.setCancelable(false);
             progressDialog.show();
         }
@@ -600,11 +601,13 @@ public class LibraryDownloader {
         @Override
         protected String doInBackground(String... params) {
             try {
+                Dp.maybeExtractAndroidJar(this);
+                publishProgress((use_d8 ? "D8" : "Dx") + " is running...");
                 _jar2dex(params[0]);
                 success = true;
             } catch (Exception e) {
                 success = false;
-                return e.toString();
+                return Log.getStackTraceString(e);
             }
 
             return "true";
@@ -616,7 +619,7 @@ public class LibraryDownloader {
                 bB.a(context, "The library has been downloaded and imported to local libraries successfully.", 1).show();
                 listener.onComplete();
             } else {
-                bB.a(context, "Dexing failed: " + s, 1).show();
+                SketchwareUtil.showAnErrorOccurredDialog(context, s);
             }
 
             if (dialog != null && dialog.isShowing()) {
@@ -624,6 +627,16 @@ public class LibraryDownloader {
             }
 
             progressDialog.dismiss();
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            progressDialog.setMessage(values[0]);
+        }
+
+        @Override
+        public void onProgress(String progress) {
+            publishProgress(progress);
         }
     }
 }
