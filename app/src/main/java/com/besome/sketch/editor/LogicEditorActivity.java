@@ -269,7 +269,7 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
         }
     }
 
-    public final void B() {
+    private void redo() {
         if (!u) {
             HistoryBlockBean historyBlockBean = bC.d(B).i(s());
             if (historyBlockBean != null) {
@@ -481,83 +481,50 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
         }
     }
 
-    public final void M() {
-        if (!this.u) {
-            HistoryBlockBean var1 = bC.d(this.B).j(this.s());
-            if (var1 == null) {
-                this.C();
-            } else {
-                label59:
-                {
-                    BlockBean var5;
-                    label58:
-                    {
-                        int var2 = var1.getActionType();
-                        ArrayList<BlockBean> var3;
-                        if (var2 == 0) {
-                            var3 = var1.getAddedData();
-                            var2 = var3.size();
-
-                            while (true) {
-                                --var2;
-                                if (var2 < 0) {
-                                    if (var1.getPrevParentData() == null) {
-                                        break label59;
-                                    }
-
-                                    var1.getPrevParentData().print();
-                                    break;
-                                }
-
-                                this.o.a(var3.get(var2), false);
-                            }
-                        } else {
-                            if (var2 == 1) {
-                                var5 = var1.getPrevUpdateData();
-                                break label58;
-                            }
-
-                            if (var2 != 2) {
-                                if (var2 != 3) {
-                                    break label59;
-                                }
-
-                                for (BlockBean var8 : var1.getBeforeMoveData()) {
-                                    this.o.a(var8, true);
-                                }
-
-                                int[] var7 = new int[2];
-                                this.o.getLocationOnScreen(var7);
-                                this.a(var1.getBeforeMoveData(), var1.getPrevX() + var7[0], var1.getPrevY() + var7[1], true);
-                                if (var1.getPrevParentData() != null) {
-                                    this.a(var1.getPrevParentData(), true);
-                                }
-
-                                if (var1.getPrevOriginalParent() == null) {
-                                    break label59;
-                                }
-
-                                var5 = var1.getPrevOriginalParent();
-                                break label58;
-                            }
-
-                            var3 = var1.getRemovedData();
-                            int[] var4 = new int[2];
-                            this.o.getLocationOnScreen(var4);
-                            this.a(var3, var1.getCurrentX() + var4[0], var1.getCurrentY() + var4[1], true);
-                            if (var1.getPrevParentData() == null) {
-                                break label59;
-                            }
-                        }
-
-                        var5 = var1.getPrevParentData();
+    private void undo() {
+        if (!u) {
+            HistoryBlockBean history = bC.d(B).j(s());
+            if (history != null) {
+                int actionType = history.getActionType();
+                if (actionType == HistoryBlockBean.ACTION_TYPE_ADD) {
+                    ArrayList<BlockBean> addedData = history.getAddedData();
+                    for (int i = addedData.size() - 1; i >= 0; i--) {
+                        o.a(addedData.get(i), false);
                     }
 
-                    this.a(var5, true);
-                }
+                    if (history.getPrevParentData() != null) {
+                        history.getPrevParentData().print();
+                        a(history.getPrevParentData(), true);
+                    }
+                } else if (actionType == HistoryBlockBean.ACTION_TYPE_UPDATE) {
+                    a(history.getPrevUpdateData(), true);
+                } else if (actionType == HistoryBlockBean.ACTION_TYPE_REMOVE) {
+                    int[] oLocationOnScreen = new int[2];
+                    o.getLocationOnScreen(oLocationOnScreen);
+                    a(history.getRemovedData(), history.getCurrentX() + oLocationOnScreen[0], history.getCurrentY() + oLocationOnScreen[1], true);
 
-                this.C();
+                    if (history.getPrevParentData() != null) {
+                        a(history.getPrevParentData(), true);
+                    }
+                } else if (actionType == HistoryBlockBean.ACTION_TYPE_MOVE) {
+                    for (BlockBean beforeMoveBlock : history.getBeforeMoveData()) {
+                        o.a(beforeMoveBlock, true);
+                    }
+
+                    int[] oLocationOnScreen = new int[2];
+                    o.getLocationOnScreen(oLocationOnScreen);
+                    a(history.getBeforeMoveData(), history.getPrevX() + oLocationOnScreen[0], history.getPrevY() + oLocationOnScreen[1], true);
+
+                    if (history.getPrevParentData() != null) {
+                        a(history.getPrevParentData(), true);
+                    }
+                    if (history.getPrevOriginalParent() != null) {
+                        a(history.getPrevOriginalParent(), true);
+                    }
+                }
             }
+
+            invalidateOptionsMenu();
         }
     }
 
@@ -639,8 +606,8 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
         }
         for (BlockBean next2 : arrayList2) {
             if (Integer.parseInt(next2.id) >= 99000000) {
-                o.g = o.g + 1;
                 hashMap.put(Integer.valueOf(next2.id), o.g);
+                o.g = o.g + 1;
             } else {
                 hashMap.put(Integer.valueOf(next2.id), Integer.valueOf(next2.id));
             }
@@ -1950,12 +1917,11 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
         if (!this.ha) {
             t();
         }
-        if (this.ia == z) {
-            return;
+        if (this.ia != z) {
+            this.ia = z;
+            l();
+            (z ? this.fa : this.ga).start();
         }
-        this.ia = z;
-        l();
-        (z ? this.fa : this.ga).start();
     }
 
     public final void h(int i) {
@@ -2260,20 +2226,17 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
     }
 
     @Override
-    public void onActivityResult(int i, int i2, Intent intent) {
-        super.onActivityResult(i, i2, intent);
-        if (i == 222) {
-            if (i2 != Activity.RESULT_OK) {
-                return;
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == Activity.RESULT_OK) {
+            if (requestCode == 222) {
+                c(data.getStringExtra("block_name"), data.getStringExtra("block_spec"));
+            } else if (requestCode == 224) {
+                a(7, 0xff2ca5e2);
+            } else if (requestCode == 463 && data.getBooleanExtra("req_update_design_activity", false)) {
+                z();
             }
-            c(intent.getStringExtra("block_name"), intent.getStringExtra("block_spec"));
-        } else if (i == 224) {
-            if (i2 != Activity.RESULT_OK) {
-                return;
-            }
-            a(7, 0xff2ca5e2);
-        } else if (i == 463 && i2 == Activity.RESULT_OK && intent.getBooleanExtra("req_update_design_activity", false)) {
-            z();
         }
     }
 
@@ -2437,9 +2400,9 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
             e(false);
             g(!this.ia);
         } else if (itemId == R.id.menu_logic_redo) {
-            B();
+            redo();
         } else if (itemId == R.id.menu_logic_undo) {
-            M();
+            undo();
         } else if (itemId == R.id.menu_logic_showsource) {
             showSourceCode();
         }
@@ -2531,42 +2494,36 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
     }
 
     @Override
-    public boolean onTouch(View view, MotionEvent motionEvent) {
-        Rs p;
-        BlockBean blockBean;
-        Rs p2;
-        BlockBean blockBean2;
-        int actionMasked = motionEvent.getActionMasked();
-        if (motionEvent.getPointerId(motionEvent.getActionIndex()) > 0) {
+    public boolean onTouch(View v, MotionEvent event) {
+        int actionMasked = event.getActionMasked();
+        if (event.getPointerId(event.getActionIndex()) > 0) {
             return true;
         }
         if (actionMasked == MotionEvent.ACTION_DOWN) {
             this.u = false;
             this.Z.postDelayed(this.aa, ViewConfiguration.getLongPressTimeout() / 2);
             int[] locationOnScreen = new int[2];
-            view.getLocationOnScreen(locationOnScreen);
+            v.getLocationOnScreen(locationOnScreen);
             this.s = locationOnScreen[0];
             this.t = locationOnScreen[1];
-            this.q = motionEvent.getRawX();
-            this.r = motionEvent.getRawY();
-            this.Y = view;
+            this.q = event.getRawX();
+            this.r = event.getRawY();
+            this.Y = v;
             return true;
         }
-        BlockBean blockBean3 = null;
         if (actionMasked == MotionEvent.ACTION_MOVE) {
             if (!this.u) {
-                if (Math.abs((this.q - this.s) - motionEvent.getX()) < this.A && Math.abs((this.r - this.t) - motionEvent.getY()) < this.A) {
-                    return false;
+                if (Math.abs(this.q - this.s - event.getX()) >= this.A || Math.abs(this.r - this.t - event.getY()) >= this.A) {
+                    this.Y = null;
+                    this.Z.removeCallbacks(this.aa);
                 }
-                this.Y = null;
-                this.Z.removeCallbacks(this.aa);
                 return false;
             }
             this.Z.removeCallbacks(this.aa);
-            float rawX = motionEvent.getRawX();
-            float rawY = motionEvent.getRawY();
-            this.p.a(view, rawX - s, rawY - t, this.q - this.s, this.r - t, this.S, this.T);
-            if (b(motionEvent.getRawX(), motionEvent.getRawY())) {
+            float rawX = event.getRawX();
+            float rawY = event.getRawY();
+            this.p.a(v, rawX - s, rawY - t, this.q - this.s, this.r - t, this.S, this.T);
+            if (b(event.getRawX(), event.getRawY())) {
                 this.p.setAllow(true);
                 b(true);
                 a(false);
@@ -2575,7 +2532,7 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
                 return true;
             }
             b(false);
-            if (a(motionEvent.getRawX(), motionEvent.getRawY())) {
+            if (a(event.getRawX(), event.getRawY())) {
                 this.p.setAllow(true);
                 a(true);
                 d(false);
@@ -2583,48 +2540,36 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
                 return true;
             }
             a(false);
-            if (d(motionEvent.getRawX(), motionEvent.getRawY())) {
+            if (d(event.getRawX(), event.getRawY())) {
                 this.p.setAllow(true);
                 d(true);
                 c(false);
                 return true;
             }
             d(false);
-            if (c(motionEvent.getRawX(), motionEvent.getRawY())) {
+            if (c(event.getRawX(), event.getRawY())) {
                 this.p.setAllow(true);
                 c(true);
                 return true;
             }
             c(false);
             this.p.a(this.v);
-            if (n.a(v[0], v[1])) {
+            if (n.a(this.v[0], this.v[1])) {
                 this.p.setAllow(true);
-                this.o.c((Rs) view, v[0], v[1]);
+                this.o.c((Rs) v, this.v[0], this.v[1]);
             } else {
                 this.p.setAllow(false);
                 this.o.d();
             }
             return true;
-        } else if (actionMasked != MotionEvent.ACTION_UP) {
-            if (actionMasked == MotionEvent.ACTION_CANCEL) {
-                this.Z.removeCallbacks(this.aa);
-                this.u = false;
-                return false;
-            } else if (actionMasked != MotionEvent.ACTION_SCROLL) {
-                return true;
-            } else {
-                this.Z.removeCallbacks(this.aa);
-                this.u = false;
-                return false;
-            }
-        } else {
+        } else if (actionMasked == MotionEvent.ACTION_UP) {
             this.Y = null;
             this.Z.removeCallbacks(this.aa);
             if (!this.u) {
-                if (view instanceof Rs) {
-                    Rs rs = (Rs) view;
+                if (v instanceof Rs) {
+                    Rs rs = (Rs) v;
                     if (rs.getBlockType() == 0) {
-                        a(rs, motionEvent.getX(), motionEvent.getY());
+                        a(rs, event.getX(), event.getY());
                     }
                 }
                 return false;
@@ -2634,123 +2579,119 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
             this.O.setDragEnabled(true);
             this.p.setDummyVisibility(View.GONE);
             if (!this.p.getAllow()) {
-                Rs rs2 = (Rs) view;
+                Rs rs2 = (Rs) v;
                 if (rs2.getBlockType() == 0) {
                     this.o.a(rs2, 0);
                     if (w != null) {
                         if (this.x == 0) {
-                            w.ha = (Integer) view.getTag();
+                            w.ha = (Integer) v.getTag();
                         }
                         if (this.x == 2) {
-                            this.w.ia = (Integer) view.getTag();
+                            this.w.ia = (Integer) v.getTag();
                         }
                         if (this.x == 3) {
-                            this.w.ja = (Integer) view.getTag();
+                            this.w.ja = (Integer) v.getTag();
                         }
                         if (this.x == 5) {
                             this.w.a((Ts) this.w.V.get(this.y), rs2);
                         }
                         rs2.E = w;
-                        p = w.p();
+                        w.p().k();
                     } else {
-                        p = rs2.p();
+                        rs2.p().k();
                     }
-                    p.k();
                 }
                 q();
             } else if (this.N.b()) {
-                Rs rs5 = (Rs) view;
+                Rs rs5 = (Rs) v;
                 if (rs5.getBlockType() == 2) {
                     g(true);
                     n(rs5.T);
                 } else {
                     b(false);
-                    int intValue = Integer.parseInt(rs5.getBean().id);
+                    int id = Integer.parseInt(rs5.getBean().id);
+                    BlockBean blockBean2;
                     if (w != null) {
                         BlockBean clone = w.getBean().clone();
                         if (x == 0) {
-                            clone.nextBlock = intValue;
+                            clone.nextBlock = id;
                         } else if (x == 2) {
-                            clone.subStack1 = intValue;
+                            clone.subStack1 = id;
                         } else if (x == 3) {
-                            clone.subStack2 = intValue;
+                            clone.subStack2 = id;
                         } else if (x == 5) {
-                            clone.parameters.set(this.y, "@" + intValue);
+                            clone.parameters.set(this.y, "@" + id);
                         }
                         blockBean2 = clone;
                     } else {
                         blockBean2 = null;
                     }
-                    ArrayList<Rs> allChildren = rs5.getAllChildren();
                     ArrayList<BlockBean> arrayList = new ArrayList<>();
-                    for (Rs allChild : allChildren) {
+                    for (Rs allChild : rs5.getAllChildren()) {
                         arrayList.add(allChild.getBean().clone());
                     }
                     b(rs5);
+                    BlockBean blockBean3 = null;
                     if (w != null) {
                         blockBean3 = w.getBean().clone();
                     }
-                    int[] iArr4 = new int[2];
-                    this.o.getLocationOnScreen(iArr4);
-                    bC.d(this.B).b(s(), arrayList, ((int) this.s) - iArr4[0], ((int) this.t) - iArr4[1], blockBean2, blockBean3);
+                    int[] oLocationOnScreen = new int[2];
+                    this.o.getLocationOnScreen(oLocationOnScreen);
+                    bC.d(this.B).b(s(), arrayList, ((int) this.s) - oLocationOnScreen[0], ((int) this.t) - oLocationOnScreen[1], blockBean2, blockBean3);
                     C();
                 }
             } else if (this.N.d()) {
                 d(false);
-                Rs rs7 = (Rs) view;
+                Rs rs7 = (Rs) v;
                 this.o.a(rs7, 0);
-                Rs p3;
                 if (w != null) {
                     if (this.x == 0) {
-                        w.ha = (Integer) view.getTag();
+                        w.ha = (Integer) v.getTag();
                     }
                     if (this.x == 2) {
-                        this.w.ia = (Integer) view.getTag();
+                        this.w.ia = (Integer) v.getTag();
                     }
                     if (this.x == 3) {
-                        this.w.ja = (Integer) view.getTag();
+                        this.w.ja = (Integer) v.getTag();
                     }
                     if (this.x == 5) {
                         this.w.a((Ts) this.w.V.get(this.y), rs7);
                     }
                     rs7.E = w;
-                    p3 = w.p();
+                    w.p().k();
                 } else {
-                    p3 = rs7.p();
+                    rs7.p().k();
                 }
-                p3.k();
                 c(rs7);
             } else if (this.N.c()) {
                 c(false);
-                if (view instanceof Us) {
-                    o(((Us) view).T);
+                if (v instanceof Us) {
+                    o(((Us) v).T);
                 }
             } else if (this.N.a()) {
                 a(false);
-                Rs rs10 = (Rs) view;
+                Rs rs10 = (Rs) v;
                 this.o.a(rs10, 0);
                 if (w != null) {
                     if (this.x == 0) {
-                        w.ha = (Integer) view.getTag();
+                        w.ha = (Integer) v.getTag();
                     }
                     if (this.x == 2) {
-                        this.w.ia = (Integer) view.getTag();
+                        this.w.ia = (Integer) v.getTag();
                     }
                     if (this.x == 3) {
-                        this.w.ja = (Integer) view.getTag();
+                        this.w.ja = (Integer) v.getTag();
                     }
                     if (this.x == 5) {
                         this.w.a((Ts) this.w.V.get(this.y), rs10);
                     }
                     rs10.E = w;
-                    p2 = w.p();
+                    w.p().k();
                 } else {
-                    p2 = rs10.p();
+                    rs10.p().k();
                 }
-                p2.k();
-                ArrayList<Rs> allChildren2 = rs10.getAllChildren();
                 ArrayList<BlockBean> arrayList2 = new ArrayList<>();
-                for (Rs rs : allChildren2) {
+                for (Rs rs : rs10.getAllChildren()) {
                     BlockBean clone2 = rs.getBean().clone();
                     clone2.id = String.valueOf(Integer.parseInt(clone2.id) + 99000000);
                     if (clone2.nextBlock > 0) {
@@ -2779,20 +2720,20 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
                 this.o.getLocationOnScreen(oLocationOnScreen);
                 bC.d(this.B).a(s(), a3, width - oLocationOnScreen[0], a2 - oLocationOnScreen[1], null, null);
                 C();
-            } else if (view instanceof Rs) {
+            } else if (v instanceof Rs) {
                 this.p.a(this.v);
-                Rs rs13 = (Rs) view;
+                Rs rs13 = (Rs) v;
                 if (rs13.getBlockType() == 1) {
                     int addTargetId = this.o.getAddTargetId();
                     BlockBean clone3 = addTargetId >= 0 ? this.o.a(addTargetId).getBean().clone() : null;
-                    Rs a4 = a(rs13, v[0], v[1], false);
+                    Rs a4 = a(rs13, this.v[0], this.v[1], false);
+                    BlockBean blockBean3 = null;
                     if (addTargetId >= 0) {
                         blockBean3 = this.o.a(addTargetId).getBean().clone();
                     }
                     int[] locationOnScreen = new int[2];
                     this.o.getLocationOnScreen(locationOnScreen);
-                    bC d = bC.d(this.B);
-                    d.a(s(), a4.getBean().clone(), v[0] - locationOnScreen[0], v[1] - locationOnScreen[1], clone3, blockBean3);
+                    bC.d(this.B).a(s(), a4.getBean().clone(), this.v[0] - locationOnScreen[0], this.v[1] - locationOnScreen[1], clone3, blockBean3);
                     if (clone3 != null) {
                         clone3.print();
                     }
@@ -2802,33 +2743,34 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
                 } else if (rs13.getBlockType() == 2) {
                     int addTargetId2 = this.o.getAddTargetId();
                     BlockBean clone5 = addTargetId2 >= 0 ? this.o.a(addTargetId2).getBean().clone() : null;
-                    ArrayList<BlockBean> data = ((Us) view).getData();
-                    ArrayList<BlockBean> a5 = a(data, v[0], v[1], true);
+                    ArrayList<BlockBean> data = ((Us) v).getData();
+                    ArrayList<BlockBean> a5 = a(data, this.v[0], this.v[1], true);
                     if (a5.size() > 0) {
                         Rs a6 = this.o.a(a5.get(0).id);
-                        a(a6, v[0], v[1], true);
+                        a(a6, this.v[0], this.v[1], true);
+                        BlockBean blockBean3 = null;
                         if (addTargetId2 >= 0) {
                             blockBean3 = this.o.a(addTargetId2).getBean().clone();
                         }
                         int[] locationOnScreen = new int[2];
                         this.o.getLocationOnScreen(locationOnScreen);
-                        bC d2 = bC.d(this.B);
-                        d2.a(s(), a5, v[0] - locationOnScreen[0], v[1] - locationOnScreen[1], clone5, blockBean3);
+                        bC.d(this.B).a(s(), a5, this.v[0] - locationOnScreen[0], this.v[1] - locationOnScreen[1], clone5, blockBean3);
                     }
                     this.o.c();
                 } else {
                     this.o.a(rs13, 0);
-                    int intValue2 = Integer.parseInt(rs13.getBean().id);
+                    int id = Integer.parseInt(rs13.getBean().id);
+                    BlockBean blockBean;
                     if (w != null) {
                         blockBean = w.getBean().clone();
                         if (x == 0) {
-                            blockBean.nextBlock = intValue2;
+                            blockBean.nextBlock = id;
                         } else if (x == 2) {
-                            blockBean.subStack1 = intValue2;
+                            blockBean.subStack1 = id;
                         } else if (x == 3) {
-                            blockBean.subStack2 = intValue2;
+                            blockBean.subStack2 = id;
                         } else if (x == 5) {
-                            blockBean.parameters.set(this.y, "@" + intValue2);
+                            blockBean.parameters.set(this.y, "@" + id);
                         }
                     } else {
                         blockBean = null;
@@ -2840,12 +2782,13 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
                     for (Rs rs : allChildren3) {
                         arrayList3.add(rs.getBean().clone());
                     }
-                    a(rs13, v[0], v[1], true);
+                    a(rs13, this.v[0], this.v[1], true);
                     ArrayList<BlockBean> arrayList4 = new ArrayList<>();
                     for (Rs rs : allChildren3) {
                         arrayList4.add(rs.getBean().clone());
                     }
                     BlockBean clone7 = w != null ? w.getBean().clone() : null;
+                    BlockBean blockBean3 = null;
                     if (a7 != null) {
                         blockBean3 = a7.getBean().clone();
                     }
@@ -2854,8 +2797,7 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
                         this.o.getLocationOnScreen(locationOnScreen);
                         int x = locationOnScreen[0];
                         int y = locationOnScreen[1];
-                        bC d3 = bC.d(this.B);
-                        d3.a(s(), arrayList3, arrayList4, ((int) this.s) - x, ((int) this.t) - y, v[0] - x, v[1] - y, blockBean, clone7, clone6, blockBean3);
+                        bC.d(this.B).a(s(), arrayList3, arrayList4, ((int) this.s) - x, ((int) this.t) - y, this.v[0] - x, this.v[1] - y, blockBean, clone7, clone6, blockBean3);
                     }
                     this.o.c();
                 }
@@ -2865,6 +2807,16 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
             this.p.setAllow(false);
             h(false);
             this.u = false;
+            return true;
+        } else if (actionMasked == MotionEvent.ACTION_CANCEL) {
+            this.Z.removeCallbacks(this.aa);
+            this.u = false;
+            return false;
+        } else if (actionMasked == MotionEvent.ACTION_SCROLL) {
+            this.Z.removeCallbacks(this.aa);
+            this.u = false;
+            return false;
+        } else {
             return true;
         }
     }
@@ -2876,54 +2828,48 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
     public void q() {
     }
 
-    public void r() {
-        if (this.Y != null) {
-            this.m.setDragEnabled(false);
-            this.n.setScrollEnabled(false);
-            this.O.setDragEnabled(false);
-            if (this.ia) {
-                this.g(false);
+    private void r() {
+        if (Y != null) {
+            m.setDragEnabled(false);
+            n.setScrollEnabled(false);
+            O.setDragEnabled(false);
+            if (ia) {
+                g(false);
             }
 
-            if (this.G) {
-                this.F.vibrate(100L);
+            if (G) {
+                F.vibrate(100L);
             }
 
-            label28:
-            {
-                this.u = true;
-                if (((Rs) this.Y).getBlockType() == 0) {
-                    this.a((Rs) this.Y);
-                    this.f(true);
-                    this.h(true);
-                    this.p.a((Rs) this.Y);
-                    this.o.a((Rs) this.Y, 8);
-                    this.o.c((Rs) this.Y);
-                } else {
-                    if (((Rs) this.Y).getBlockType() == 2) {
-                        this.f(false);
-                        this.h(true);
-                        this.p.a((Rs) this.Y);
-                        o.a((Rs) Y, ((Us) Y).getData());
-                        break label28;
-                    }
-
-                    this.p.a((Rs) this.Y);
-                }
-
-                this.o.a((Rs) this.Y);
+            u = true;
+            if (((Rs) Y).getBlockType() == 0) {
+                a((Rs) Y);
+                f(true);
+                h(true);
+                p.a((Rs) Y);
+                o.a((Rs) Y, 8);
+                o.c((Rs) Y);
+                o.a((Rs) Y);
+            } else if (((Rs) Y).getBlockType() == 2) {
+                f(false);
+                h(true);
+                p.a((Rs) Y);
+                o.a((Rs) Y, ((Us) Y).getData());
+            } else {
+                p.a((Rs) Y);
+                o.a((Rs) Y);
             }
 
-            float var3 = this.q - this.s;
-            float var4 = this.r - this.t;
-            this.p.a(this.Y, var3, var4, var3, var4, (float) this.S, (float) this.T);
-            this.p.a(this.v);
-            if (n.a((float) v[0], (float) v[1])) {
-                this.p.setAllow(true);
+            float a = q - s;
+            float b = r - t;
+            p.a(Y, a, b, a, b, S, T);
+            p.a(v);
+            if (n.a(v[0], v[1])) {
+                p.setAllow(true);
                 o.c((Rs) Y, v[0], v[1]);
             } else {
-                this.p.setAllow(false);
-                this.o.d();
+                p.setAllow(false);
+                o.d();
             }
         }
     }
