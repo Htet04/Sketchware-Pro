@@ -14,23 +14,19 @@ import a.a.a.wB;
 
 public class ItemTimePicker extends TimePicker implements sy {
 
-
-    public ViewBean f23a;
-    public boolean b;
-    public boolean c;
-    public Paint d;
-    public float e;
+    private final Paint paint;
+    private final int paddingFactor;
+    private final Rect rect;
+    private ViewBean viewBean;
+    private boolean hasSelection;
+    private boolean isFixed;
 
     public ItemTimePicker(Context context) {
         super(context);
-        a(context);
-    }
-
-    @Deprecated
-    public void a(Context context) {
-        this.e = wB.a(context, 1.0f);
-        this.d = new Paint(1);
-        this.d.setColor(-1785080368);
+        paddingFactor = (int) wB.a(context, 1.0f);
+        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(0x9599d5d0);
+        rect = new Rect();
         setFocusable(false);
         setClickable(false);
         setDrawingCacheEnabled(true);
@@ -38,37 +34,38 @@ public class ItemTimePicker extends TimePicker implements sy {
 
     @Override
     public ViewBean getBean() {
-        return this.f23a;
+        return viewBean;
     }
 
     @Override
     public void setBean(ViewBean viewBean) {
-        this.f23a = viewBean;
+        this.viewBean = viewBean;
     }
 
     @Override
     public boolean getFixed() {
-        return this.c;
+        return isFixed;
     }
 
     public void setFixed(boolean z) {
-        this.c = z;
+        isFixed = z;
     }
 
     public boolean getSelection() {
-        return this.b;
+        return hasSelection;
     }
 
     @Override
     public void setSelection(boolean z) {
-        this.b = z;
+        hasSelection = z;
         invalidate();
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        if (this.b) {
-            canvas.drawRect(new Rect(0, 0, getMeasuredWidth(), getMeasuredHeight()), this.d);
+        if (hasSelection) {
+            rect.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
+            canvas.drawRect(rect, paint);
         }
         super.onDraw(canvas);
     }
@@ -79,8 +76,7 @@ public class ItemTimePicker extends TimePicker implements sy {
     }
 
     @Override
-    public void setPadding(int i, int i2, int i3, int i4) {
-        float f = this.e;
-        super.setPadding((int) (((float) i) * f), (int) (((float) i2) * f), (int) (((float) i3) * f), (int) (f * ((float) i4)));
+    public void setPadding(int left, int top, int right, int bottom) {
+        super.setPadding(left * paddingFactor, top * paddingFactor, right * paddingFactor, paddingFactor * bottom);
     }
 }

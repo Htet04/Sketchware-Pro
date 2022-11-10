@@ -12,65 +12,63 @@ import a.a.a.sy;
 import a.a.a.wB;
 
 public class ItemRadioButton extends RadioButton implements sy {
-    public ViewBean b;
-    public boolean c;
-    public boolean d;
-    public Paint e;
-    public float f;
+
+    private final Paint paint;
+    private final int paddingFactor;
+    private final Rect rect;
+    private ViewBean viewBean;
+    private boolean hasSelection;
+    private boolean isFixed;
 
     public ItemRadioButton(Context context) {
         super(context);
-        a(context);
-    }
-
-    @Deprecated
-    public void a(Context context) {
-        this.f = wB.a(context, 1.0f);
-        this.e = new Paint(1);
-        this.e.setColor(-1785080368);
+        paddingFactor = (int) wB.a(context, 1.0f);
+        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(0x9599d5d0);
+        rect = new Rect();
         setDrawingCacheEnabled(true);
     }
 
     @Override
     public ViewBean getBean() {
-        return this.b;
+        return viewBean;
     }
 
     @Override
     public void setBean(ViewBean viewBean) {
-        this.b = viewBean;
+        this.viewBean = viewBean;
     }
 
     @Override
     public boolean getFixed() {
-        return this.d;
+        return isFixed;
     }
 
     public void setFixed(boolean z) {
-        this.d = z;
+        isFixed = z;
     }
 
     public boolean getSelection() {
-        return this.c;
+        return hasSelection;
     }
 
     @Override
     public void setSelection(boolean z) {
-        this.c = z;
+        hasSelection = z;
         invalidate();
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        if (this.c) {
-            canvas.drawRect(new Rect(0, 0, getMeasuredWidth(), getMeasuredHeight()), this.e);
+        if (hasSelection) {
+            rect.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
+            canvas.drawRect(rect, paint);
         }
         super.onDraw(canvas);
     }
 
     @Override
-    public void setPadding(int i, int i2, int i3, int i4) {
-        float f2 = this.f;
-        super.setPadding((int) (((float) i) * f2), (int) (((float) i2) * f2), (int) (((float) i3) * f2), (int) (f2 * ((float) i4)));
+    public void setPadding(int left, int top, int right, int bottom) {
+        super.setPadding(left * paddingFactor, top * paddingFactor, right * paddingFactor, paddingFactor * bottom);
     }
 }

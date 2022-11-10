@@ -13,67 +13,65 @@ import a.a.a.wB;
 
 @Deprecated
 public class ItemAnalogClock extends AnalogClock implements sy {
-    public ViewBean O;
-    public boolean P;
-    public boolean Q;
-    public Paint R;
-    public float S;
+
+    private final Paint paint;
+    private final int paddingFactor;
+    private final Rect rect;
+    private ViewBean viewBean;
+    private boolean hasSelection;
+    private boolean isFixed;
 
     @Deprecated
     public ItemAnalogClock(Context context) {
         super(context);
-        a(context);
-    }
-
-    @Deprecated
-    public void a(Context context) {
-        this.S = wB.a(context, 1.0f);
-        this.R = new Paint(1);
-        this.R.setColor(-1785080368);
+        paddingFactor = (int) wB.a(context, 1.0f);
+        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(0x9599d5d0);
+        rect = new Rect();
         setDrawingCacheEnabled(true);
     }
 
     @Override
     public ViewBean getBean() {
-        return this.O;
+        return viewBean;
     }
 
     @Override
     public void setBean(ViewBean viewBean) {
-        this.O = viewBean;
+        this.viewBean = viewBean;
     }
 
     @Override
     public boolean getFixed() {
-        return this.Q;
+        return isFixed;
     }
 
     public void setFixed(boolean z) {
-        this.Q = z;
+        isFixed = z;
     }
 
     public boolean getSelection() {
-        return this.P;
+        return hasSelection;
     }
 
     @Override
     public void setSelection(boolean z) {
-        this.P = z;
+        hasSelection = z;
         invalidate();
     }
 
     @Override
     @Deprecated
     public void onDraw(Canvas canvas) {
-        if (this.P) {
-            canvas.drawRect(new Rect(0, 0, getMeasuredWidth(), getMeasuredHeight()), this.R);
+        if (hasSelection) {
+            rect.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
+            canvas.drawRect(rect, paint);
         }
         super.onDraw(canvas);
     }
 
     @Override
-    public void setPadding(int i, int i2, int i3, int i4) {
-        float f = this.S;
-        super.setPadding((int) (((float) i) * f), (int) (((float) i2) * f), (int) (((float) i3) * f), (int) (f * ((float) i4)));
+    public void setPadding(int left, int top, int right, int bottom) {
+        super.setPadding(left * paddingFactor, top * paddingFactor, right * paddingFactor, paddingFactor * bottom);
     }
 }

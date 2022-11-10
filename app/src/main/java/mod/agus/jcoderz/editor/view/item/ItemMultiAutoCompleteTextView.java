@@ -13,77 +13,75 @@ import a.a.a.sy;
 import a.a.a.wB;
 
 public class ItemMultiAutoCompleteTextView extends MultiAutoCompleteTextView implements sy {
-    public ViewBean c;
-    public boolean d;
-    public boolean e;
-    public Paint f;
-    public float g;
-    public Drawable h;
+
+    private final Paint paint;
+    private final int paddingFactor;
+    private final Drawable drawable;
+    private final Rect rect;
+    private ViewBean viewBean;
+    private boolean hasSelection;
+    private boolean isFixed;
 
     public ItemMultiAutoCompleteTextView(Context context) {
         super(context);
-        a(context);
-    }
-
-    @Deprecated
-    public void a(Context context) {
-        this.g = wB.a(context, 1.0f);
-        this.f = new Paint(1);
-        this.f.setColor(-1785080368);
+        paddingFactor = (int) wB.a(context, 1.0f);
+        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(0x9599d5d0);
+        rect = new Rect();
         setDrawingCacheEnabled(true);
         setFocusable(false);
-        this.h = getBackground();
+        drawable = getBackground();
     }
 
     @Override
     public ViewBean getBean() {
-        return this.c;
+        return viewBean;
     }
 
     @Override
     public void setBean(ViewBean viewBean) {
-        this.c = viewBean;
+        this.viewBean = viewBean;
     }
 
     @Override
     public boolean getFixed() {
-        return this.e;
+        return isFixed;
     }
 
     public void setFixed(boolean z) {
-        this.e = z;
+        isFixed = z;
     }
 
     public boolean getSelection() {
-        return this.d;
+        return hasSelection;
     }
 
     @Override
     public void setSelection(boolean z) {
-        this.d = z;
+        hasSelection = z;
         invalidate();
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        if (this.d) {
-            canvas.drawRect(new Rect(0, 0, getMeasuredWidth(), getMeasuredHeight()), this.f);
+        if (hasSelection) {
+            rect.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
+            canvas.drawRect(rect, paint);
         }
         super.onDraw(canvas);
     }
 
     @Override
     public void setBackgroundColor(int i) {
-        if (i == 16777215) {
-            setBackground(this.h);
+        if (i == 0xffffff) {
+            setBackground(drawable);
         } else {
             super.setBackgroundColor(i);
         }
     }
 
     @Override
-    public void setPadding(int i, int i2, int i3, int i4) {
-        float f2 = this.g;
-        super.setPadding((int) (((float) i) * f2), (int) (((float) i2) * f2), (int) (((float) i3) * f2), (int) (f2 * ((float) i4)));
+    public void setPadding(int left, int top, int right, int bottom) {
+        super.setPadding(left * paddingFactor, top * paddingFactor, right * paddingFactor, paddingFactor * bottom);
     }
 }
