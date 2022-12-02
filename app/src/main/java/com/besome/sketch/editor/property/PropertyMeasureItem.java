@@ -1,5 +1,6 @@
 package com.besome.sketch.editor.property;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.view.View;
@@ -18,9 +19,9 @@ import a.a.a.aB;
 import a.a.a.mB;
 import a.a.a.sq;
 import a.a.a.wB;
-import a.a.a.xB;
 import mod.hey.studios.util.Helper;
 
+@SuppressLint("ViewConstructor")
 public class PropertyMeasureItem extends RelativeLayout implements View.OnClickListener {
 
     private String key = "";
@@ -59,7 +60,7 @@ public class PropertyMeasureItem extends RelativeLayout implements View.OnClickL
         int identifier = getResources().getIdentifier(key, "string", getContext().getPackageName());
         if (identifier > 0) {
             tvName.setText(Helper.getResString(identifier));
-            if (this.propertyMenuItem.getVisibility() == VISIBLE) {
+            if (propertyMenuItem.getVisibility() == VISIBLE) {
                 setIcon(findViewById(R.id.img_icon));
                 ((TextView) findViewById(R.id.tv_title)).setText(Helper.getResString(identifier));
                 return;

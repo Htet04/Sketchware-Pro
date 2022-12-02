@@ -17,11 +17,11 @@ public class Nx {
     }
 
     public Nx(String str, boolean z) {
-        this.d = z;
-        this.a = str;
-        this.b = 0;
-        this.e = new ArrayList<>();
-        this.f = new ArrayList<>();
+        d = z;
+        a = str;
+        b = 0;
+        e = new ArrayList<>();
+        f = new ArrayList<>();
     }
 
     private String addZeroIndent() {
@@ -36,7 +36,7 @@ public class Nx {
         return str.toString();
     }
 
-    public void a(int position, String namespace, String attr, String value) {
+    public void addNamespaceDeclaration(int position, String namespace, String attr, String value) {
         e.add(position, new AttributeBuilder(namespace, attr, value));
     }
 
@@ -49,11 +49,11 @@ public class Nx {
         c = str;
     }
 
-    public void a(String namespace, String attr, String value) {
+    public void addAttribute(String namespace, String attr, String value) {
         e.add(new AttributeBuilder(namespace, attr, value));
     }
 
-    public void b(String value) {
+    public void addAttributeValue(String value) {
         e.add(new AttributeBuilder(value));
     }
 
@@ -98,7 +98,7 @@ public class Nx {
     }
 
     public String c() {
-        return a.replaceAll("\\w*\\..*\\.", "");
+        return Jx.WIDGET_NAME_PATTERN.matcher(a).replaceAll("");
     }
 
     private void b(int indentSize) {
@@ -130,7 +130,7 @@ public class Nx {
             if (namespace != null && namespace.length() > 0) {
                 return namespace + ":" + attr + "=" + "\"" + value + "\"";
             } else if (attr == null || attr.length() <= 0) {
-                return value.replaceAll("\n", Nx.this.g);
+                return value.replaceAll("\n", g);
             } else {
                 return attr + "=" + "\"" + value + "\"";
             }

@@ -2,7 +2,6 @@ package mod.hey.studios.project.backup;
 
 import android.os.Environment;
 
-import com.besome.sketch.SketchApplication;
 import com.besome.sketch.beans.BlockBean;
 import com.google.gson.Gson;
 
@@ -55,7 +54,7 @@ public class BackupFactory {
             "fonts", "icons", "images", "sounds"
     };
 
-    String sc_id;
+    final String sc_id;
     File outPath;
     boolean backupLocalLibs;
     boolean backupCustomBlocks;

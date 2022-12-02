@@ -16,7 +16,6 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.sketchware.remod.R;
 
 import a.a.a.aB;
-import a.a.a.xB;
 import mod.hey.studios.util.Helper;
 
 public class ProjectSettingsDialog {
@@ -26,7 +25,7 @@ public class ProjectSettingsDialog {
 
     public ProjectSettingsDialog(Activity activity, String sc_id) {
         this.activity = activity;
-        this.settings = new ProjectSettings(sc_id);
+        settings = new ProjectSettings(sc_id);
     }
 
     public void show() {

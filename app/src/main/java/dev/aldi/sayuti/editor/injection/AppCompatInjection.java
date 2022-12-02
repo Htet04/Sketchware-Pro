@@ -7,6 +7,8 @@ import com.google.gson.Gson;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -48,7 +50,7 @@ public class AppCompatInjection {
             for (Map<String, Object> injection : Objects.requireNonNull(projectInjections.get(projectFile.fileName))) {
                 Object value;
                 if (str.toLowerCase().equals(injection.get("type")) && (value = injection.get("value")) instanceof String) {
-                    nx.b((String) value);
+                    nx.addAttributeValue((String) value);
                 }
             }
         }
@@ -70,11 +72,16 @@ public class AppCompatInjection {
     }
 
     public static void refreshInjections() {
-        for (String sc_id : INJECTIONS.keySet()) {
-            Map<String, List<Map<String, Object>>> projectInjections = INJECTIONS.get(sc_id);
-            for (String activityFilename : Objects.requireNonNull(projectInjections).keySet()) {
-                projectInjections.remove(activityFilename);
-                projectInjections.put(activityFilename, readAppCompatInjections(sc_id, activityFilename));
+        for (Map.Entry<String, Map<String, List<Map<String, Object>>>> project : INJECTIONS.entrySet()) {
+            Map<String, List<Map<String, Object>>> projectInjections = project.getValue();
+
+            List<String> activityFilenames = new LinkedList<>();
+            for (Iterator<String> iterator = Objects.requireNonNull(projectInjections).keySet().iterator(); iterator.hasNext(); iterator.remove()) {
+                activityFilenames.add(iterator.next());
+            }
+
+            for (String activityFilename : activityFilenames) {
+                projectInjections.put(activityFilename, readAppCompatInjections(project.getKey(), activityFilename));
             }
         }
     }

@@ -27,7 +27,6 @@ import a.a.a.bB;
 import a.a.a.ci;
 import a.a.a.mB;
 import a.a.a.wB;
-import a.a.a.xB;
 import mod.hey.studios.util.Helper;
 import mod.hilal.saif.activities.tools.Tools;
 import mod.ilyasse.activities.about.AboutModActivity;
@@ -269,7 +268,7 @@ public class MainDrawer extends LinearLayout implements View.OnClickListener {
                 if (!mB.a()) {
                     int id = j() - 1;
                     DrawerItemAdapter.this.c(id);
-                    Activity activity = (Activity) MainDrawer.this.getContext();
+                    Activity activity = (Activity) getContext();
                     if (id == DrawerItem.MENU_ABOUT_MODDERS.ordinal()) {
                         Intent intent = new Intent(activity, AboutModActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);

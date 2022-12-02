@@ -29,12 +29,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import a.a.a.Ss;
+import a.a.a.aB;
 import a.a.a.eC;
 import a.a.a.jC;
 import a.a.a.uq;
 import a.a.a.wB;
 import dev.aldi.sayuti.block.ExtraMenuBlock;
-import mod.SketchwareUtil;
 import mod.agus.jcoderz.editor.manage.block.makeblock.BlockMenu;
 import mod.agus.jcoderz.lib.FilePathUtil;
 import mod.agus.jcoderz.lib.FileResConfig;
@@ -43,8 +43,7 @@ import mod.hasrat.highlighter.SimpleHighlighter;
 import mod.hey.studios.util.Helper;
 import mod.hilal.saif.activities.tools.ConfigActivity;
 import mod.hilal.saif.asd.AsdDialog;
-import mod.hilal.saif.asd.AsdOrigin;
-import mod.hilal.saif.asd.asdforall.AsdAll;
+import mod.hilal.saif.asd.asdforall.AsdAllEditor;
 import mod.hilal.saif.asd.old.AsdOldDialog;
 
 public class ExtraMenuBean {
@@ -58,10 +57,10 @@ public class ExtraMenuBean {
     public static final int LIST_TYPE_MAP = 3;
     public static final int LIST_TYPE_STRING = 2;
 
-    public static final String[] adSize = new String[]{"AUTO_HEIGHT", "BANNER", "FLUID", "FULL_BANNER", "FULL_WIDTH", "INVALID", "LARGE_BANNER", "LEADERBOARD", "MEDIUM_RECTANGLE", "SEARCH", "SMART_BANNER", "WIDE_SKYSCRAPER"};
-    public static final String[] intentKey = new String[]{"EXTRA_ALLOW_MULTIPLE", "EXTRA_EMAIL", "EXTRA_INDEX", "EXTRA_INTENT", "EXTRA_PHONE_NUMBER", "EXTRA_STREAM", "EXTRA_SUBJECT", "EXTRA_TEXT", "EXTRA_TITLE"};
-    public static final String[] pixelFormat = new String[]{"OPAQUE", "RGBA_1010102", "RGBA_8888", "RGBA_F16", "RGBX_8888", "RGB_565", "RGB_888", "TRANSLUCENT", "TRANSPARENT", "UNKNOWN"};
-    public static final String[] patternFlags = new String[]{"CANON_EQ", "CASE_INSENSITIVE", "COMMENTS", "DOTALL", "LITERAL", "MULTILINE", "UNICODE_CASE", "UNIX_LINES"};
+    public static final String[] adSize = {"AUTO_HEIGHT", "BANNER", "FLUID", "FULL_BANNER", "FULL_WIDTH", "INVALID", "LARGE_BANNER", "LEADERBOARD", "MEDIUM_RECTANGLE", "SEARCH", "SMART_BANNER", "WIDE_SKYSCRAPER"};
+    public static final String[] intentKey = {"EXTRA_ALLOW_MULTIPLE", "EXTRA_EMAIL", "EXTRA_INDEX", "EXTRA_INTENT", "EXTRA_PHONE_NUMBER", "EXTRA_STREAM", "EXTRA_SUBJECT", "EXTRA_TEXT", "EXTRA_TITLE"};
+    public static final String[] pixelFormat = {"OPAQUE", "RGBA_1010102", "RGBA_8888", "RGBA_F16", "RGBX_8888", "RGB_565", "RGB_888", "TRANSLUCENT", "TRANSPARENT", "UNKNOWN"};
+    public static final String[] patternFlags = {"CANON_EQ", "CASE_INSENSITIVE", "COMMENTS", "DOTALL", "LITERAL", "MULTILINE", "UNICODE_CASE", "UNIX_LINES"};
     public static final String[] permission;
 
     static {
@@ -149,11 +148,11 @@ public class ExtraMenuBean {
             case "m":
                 switch (menuName) {
                     case "resource":
-                        logicEditor.a(ss, "property_image");
+                        logicEditor.pickImage(ss, "property_image");
                         return;
 
                     case "resource_bg":
-                        logicEditor.a(ss, "property_background_resource");
+                        logicEditor.pickImage(ss, "property_background_resource");
                         return;
 
                     case "sound":
@@ -232,7 +231,7 @@ public class ExtraMenuBean {
 
     private void defaultMenus(Ss menu) {
         String menuName = menu.getMenuName();
-        AsdAll asdAll = new AsdAll(logicEditor);
+        aB dialog = new aB(logicEditor);
         View rootView = wB.a(logicEditor, R.layout.property_popup_selector_single);
         ViewGroup viewGroup = rootView.findViewById(R.id.rg_content);
         ArrayList<String> menus = new ArrayList<>();
@@ -440,17 +439,17 @@ public class ExtraMenuBean {
 
             case "videoad":
                 title = Helper.getResString(R.string.logic_editor_title_select_component);
-                menus = getComponentMenus(22);
+                menus = getComponentMenus(ComponentBean.COMPONENT_TYPE_REWARDED_VIDEO_AD);
                 break;
 
             case "progressdialog":
                 title = Helper.getResString(R.string.logic_editor_title_select_component);
-                menus = getComponentMenus(23);
+                menus = getComponentMenus(ComponentBean.COMPONENT_TYPE_PROGRESS_DIALOG);
                 break;
 
             case "datepickerdialog":
                 title = Helper.getResString(R.string.logic_editor_title_select_component);
-                menus = getComponentMenus(24);
+                menus = getComponentMenus(ComponentBean.COMPONENT_TYPE_DATE_PICKER_DIALOG);
                 break;
 
             case "asynctask":
@@ -460,52 +459,52 @@ public class ExtraMenuBean {
 
             case "timepickerdialog":
                 title = Helper.getResString(R.string.logic_editor_title_select_component);
-                menus = getComponentMenus(25);
+                menus = getComponentMenus(ComponentBean.COMPONENT_TYPE_TIME_PICKER_DIALOG);
                 break;
 
             case "notification":
                 title = Helper.getResString(R.string.logic_editor_title_select_component);
-                menus = getComponentMenus(26);
+                menus = getComponentMenus(ComponentBean.COMPONENT_TYPE_NOTIFICATION);
                 break;
 
             case "fragmentAdapter":
                 title = "Select a FragmentAdapter Component";
-                menus = getComponentMenus(27);
+                menus = getComponentMenus(ComponentBean.COMPONENT_TYPE_FRAGMENT_ADAPTER);
                 break;
 
             case "phoneauth":
                 title = "Select a FirebasePhone Component";
-                menus = getComponentMenus(28);
+                menus = getComponentMenus(ComponentBean.COMPONENT_TYPE_FIREBASE_AUTH_PHONE);
                 break;
 
             case "dynamiclink":
                 title = "Select a DynamicLink Component";
-                menus = getComponentMenus(29);
+                menus = getComponentMenus(ComponentBean.COMPONENT_TYPE_FIREBASE_DYNAMIC_LINKS);
                 break;
 
             case "cloudmessage":
                 title = "Select a CloudMessage Component";
-                menus = getComponentMenus(30);
+                menus = getComponentMenus(ComponentBean.COMPONENT_TYPE_FIREBASE_CLOUD_MESSAGE);
                 break;
 
             case "googlelogin":
                 title = "Select a FirebaseGoogle Component";
-                menus = getComponentMenus(31);
+                menus = getComponentMenus(ComponentBean.COMPONENT_TYPE_FIREBASE_AUTH_GOOGLE_LOGIN);
                 break;
 
             case "onesignal":
                 title = "Select a OneSignal Component";
-                menus = getComponentMenus(32);
+                menus = getComponentMenus(ComponentBean.COMPONENT_TYPE_ONESIGNAL);
                 break;
 
             case "fbadbanner":
                 title = "Select an FBAdsBanner Component";
-                menus = getComponentMenus(33);
+                menus = getComponentMenus(ComponentBean.COMPONENT_TYPE_FACEBOOK_ADS_BANNER);
                 break;
 
             case "fbadinterstitial":
                 title = "Select an FBAdsInterstitial Component";
-                menus = getComponentMenus(34);
+                menus = getComponentMenus(ComponentBean.COMPONENT_TYPE_FACEBOOK_ADS_INTERSTITIAL);
                 break;
 
             case "providerType":
@@ -522,12 +521,14 @@ public class ExtraMenuBean {
                 title = Helper.getResString(R.string.logic_editor_title_mapview_marker_color);
                 menus = new ArrayList<>(Arrays.asList(uq.r));
                 break;
+
             case "service":
                 title = "Select a Background Service";
                 if (FileUtil.isExistFile(fpu.getManifestService(sc_id))) {
                     menus = frc.getServiceManifestList();
                 }
                 break;
+
             case "broadcast":
                 title = "Select a Broadcast Receiver";
                 if (FileUtil.isExistFile(fpu.getManifestBroadcast(sc_id))) {
@@ -575,6 +576,7 @@ public class ExtraMenuBean {
                     menus.add(projectFileBean.fileName);
                 }
                 break;
+
             case "SignButtonColor":
                 title = "Select a SignInButton Color";
                 menus.add("COLOR_AUTO");
@@ -599,11 +601,11 @@ public class ExtraMenuBean {
             case "ResAttr":
             case "ResXml":
                 title = "Deprecated";
-                asdAll.a("This Block Menu was initially used to parse resource values, but was too I/O heavy and has been removed due to that. Please use the Code Editor instead.");
+                dialog.a("This Block Menu was initially used to parse resource values, but was too I/O heavy and has been removed due to that. Please use the Code Editor instead.");
                 break;
 
             case "AdUnit":
-                asdAll.a(R.drawable.unit_96);
+                dialog.a(R.drawable.unit_96);
                 title = "Select an Ad Unit";
                 for (AdUnitBean bean : jC.c(sc_id).e.adUnits) {
                     menus.add(bean.id);
@@ -611,7 +613,7 @@ public class ExtraMenuBean {
                 break;
 
             case "TestDevice":
-                asdAll.a(R.drawable.ic_test_device_48dp);
+                dialog.a(R.drawable.ic_test_device_48dp);
                 title = "Select a Test device";
                 for (AdTestDeviceBean testDevice : jC.c(sc_id).e.testDevices) {
                     menus.add(testDevice.deviceId);
@@ -671,7 +673,7 @@ public class ExtraMenuBean {
                 Pair<String, String[]> menuPair = BlockMenu.getMenu(menu.getMenuName());
                 title = menuPair.first;
                 menus = new ArrayList<>(Arrays.asList(menuPair.second));
-                extraMenuBlock.a(menu, asdAll, menus);
+                extraMenuBlock.a(menu, dialog, menus);
 
                 for (String s : projectDataManager.e(javaName, 5)) {
                     Matcher matcher2 = Pattern.compile("^(\\w+)[\\s]+(\\w+)").matcher(s);
@@ -703,9 +705,9 @@ public class ExtraMenuBean {
             }
         }
 
-        asdAll.b(title);
-        asdAll.a(rootView);
-        asdAll.b(Helper.getResString(R.string.common_word_select), view -> {
+        dialog.b(title);
+        dialog.a(rootView);
+        dialog.b(Helper.getResString(R.string.common_word_select), view -> {
             for (int i = 0; i < viewGroup.getChildCount(); i++) {
                 if (viewGroup.getChildAt(i) instanceof RadioButton) {
                     RadioButton rb = (RadioButton) viewGroup.getChildAt(i);
@@ -714,11 +716,18 @@ public class ExtraMenuBean {
                     }
                 }
             }
-            asdAll.dismiss();
+            dialog.dismiss();
         });
-        asdAll.carry(logicEditor, menu, viewGroup);
-        asdAll.a(Helper.getResString(R.string.common_word_cancel), Helper.getDialogDismissListener(asdAll));
-        asdAll.show();
+        dialog.a(Helper.getResString(R.string.common_word_cancel), Helper.getDialogDismissListener(dialog));
+        dialog.configureDefaultButton("Code Editor", v -> {
+            AsdAllEditor editor = new AsdAllEditor(logicEditor);
+            editor.setCon(menu.getArgValue().toString());
+            editor.show();
+            editor.saveLis(logicEditor, menu, editor);
+            editor.cancelLis(logicEditor, editor);
+            dialog.dismiss();
+        });
+        dialog.show();
     }
 
     private ArrayList<String> getVarMenus(int type) {
@@ -734,11 +743,11 @@ public class ExtraMenuBean {
     }
 
     private void asdDialog(Ss ss, String message) {
-        AsdOrigin asdOr = new AsdOrigin(logicEditor);
-        asdOr.b(Helper.getResString(R.string.logic_editor_title_enter_string_value));
-        asdOr.a(R.drawable.rename_96_blue);
+        aB dialog = new aB(logicEditor);
+        dialog.b(Helper.getResString(R.string.logic_editor_title_enter_string_value));
+        dialog.a(R.drawable.rename_96_blue);
 
-        if (!isEmpty(message)) asdOr.a(message);
+        if (!isEmpty(message)) dialog.a(message);
 
         View root = wB.a(logicEditor, R.layout.property_popup_input_text);
         EditText edittext = root.findViewById(R.id.ed_input);
@@ -748,23 +757,34 @@ public class ExtraMenuBean {
             new SimpleHighlighter(edittext);
         }
         edittext.setText(ss.getArgValue().toString());
-        asdOr.a(root);
-        asdOr.carry(logicEditor, ss, false, edittext);
+        dialog.a(root);
 
-        asdOr.b(Helper.getResString(R.string.common_word_save), view -> {
+        dialog.b(Helper.getResString(R.string.common_word_save), view -> {
             String content = edittext.getText().toString();
             if (content.length() > 0 && content.charAt(0) == '@') {
                 content = " " + content;
             }
             logicEditor.a(ss, (Object) content);
-            SketchwareUtil.hideKeyboard(edittext);
-            asdOr.dismiss();
+            dialog.dismiss();
         });
-        asdOr.a(Helper.getResString(R.string.common_word_cancel), view -> {
-            SketchwareUtil.hideKeyboard(edittext);
-            asdOr.dismiss();
+        dialog.a(Helper.getResString(R.string.common_word_cancel), Helper.getDialogDismissListener(dialog));
+        dialog.configureDefaultButton("Code Editor", v -> {
+            if (ConfigActivity.isLegacyCeEnabled()) {
+                AsdOldDialog asdOldDialog = new AsdOldDialog(logicEditor);
+                asdOldDialog.setCon(edittext.getText().toString());
+                asdOldDialog.show();
+                asdOldDialog.saveLis(logicEditor, false, ss, asdOldDialog);
+                asdOldDialog.cancelLis(logicEditor, asdOldDialog);
+            } else {
+                AsdDialog asdDialog = new AsdDialog(logicEditor);
+                asdDialog.setCon(edittext.getText().toString());
+                asdDialog.show();
+                asdDialog.saveLis(logicEditor, false, ss, asdDialog);
+                asdDialog.cancelLis(asdDialog);
+            }
+            dialog.dismiss();
         });
-        asdOr.show();
+        dialog.show();
     }
 
     private void pathSelectorMenu(final Ss ss) {

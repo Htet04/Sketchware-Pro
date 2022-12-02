@@ -2,9 +2,12 @@ package mod.hasrat.control.logic;
 
 import static android.text.TextUtils.isEmpty;
 import static com.besome.sketch.SketchApplication.getContext;
+import static mod.SketchwareUtil.dpToPx;
 import static mod.SketchwareUtil.getDip;
 
+import android.content.Context;
 import android.text.InputType;
+import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
@@ -14,12 +17,19 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.StringRes;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.besome.sketch.beans.ProjectFileBean;
 import com.besome.sketch.editor.LogicEditorActivity;
 import com.google.android.material.textfield.TextInputLayout;
 import com.sketchware.remod.R;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Function;
 
 import a.a.a.ZB;
 import a.a.a.aB;
@@ -27,7 +37,6 @@ import a.a.a.bB;
 import a.a.a.eC;
 import a.a.a.jC;
 import a.a.a.uq;
-import a.a.a.wB;
 import mod.SketchwareUtil;
 import mod.hasrat.dialog.SketchDialog;
 import mod.hasrat.menu.ExtraMenuBean;
@@ -44,7 +53,7 @@ public class LogicClickListener implements View.OnClickListener {
     public LogicClickListener(LogicEditorActivity logicEditor) {
         this.logicEditor = logicEditor;
         projectDataManager = jC.a(logicEditor.B);
-        this.projectFile = logicEditor.M;
+        projectFile = logicEditor.M;
         eventName = logicEditor.C + "_" + logicEditor.D;
         javaName = logicEditor.M.getJavaName();
     }
@@ -162,53 +171,50 @@ public class LogicClickListener implements View.OnClickListener {
         SketchDialog dialog = new SketchDialog(logicEditor);
         dialog.setTitle(Helper.getResString(R.string.logic_editor_title_remove_variable));
         dialog.setIcon(R.drawable.delete_96);
-        View var2 = wB.a(logicEditor, R.layout.property_popup_selector_single);
-        ViewGroup viewGroup = var2.findViewById(R.id.rg_content);
 
-        ArrayList<String> bools = getUsedVariable(ExtraMenuBean.VARIABLE_TYPE_BOOLEAN);
-        for (int i = 0, boolsSize = bools.size(); i < boolsSize; i++) {
-            if (i == 0) viewGroup.addView(commonTextView("Boolean (" + boolsSize + ")"));
-            viewGroup.addView(getRemoveVariableCheckBox(bools.get(i)));
+        RecyclerView recyclerView = new RecyclerView(logicEditor);
+        recyclerView.setLayoutManager(new LinearLayoutManager(null));
+
+        List<Item> data = new LinkedList<>();
+        RemoveAdapter adapter = new RemoveAdapter(logicEditor, data,
+                variableName -> logicEditor.o.c(variableName) || projectDataManager.c(javaName, variableName, eventName));
+        recyclerView.setAdapter(adapter);
+
+        List<Pair<List<Integer>, String>> variableTypes = List.of(
+                new Pair<>(List.of(ExtraMenuBean.VARIABLE_TYPE_BOOLEAN), "Boolean (%d)"),
+                new Pair<>(List.of(ExtraMenuBean.VARIABLE_TYPE_NUMBER), "Number (%d)"),
+                new Pair<>(List.of(ExtraMenuBean.VARIABLE_TYPE_STRING), "String (%d)"),
+                new Pair<>(List.of(ExtraMenuBean.VARIABLE_TYPE_MAP), "Map (%d)"),
+                new Pair<>(List.of(5, 6), "Custom Variable (%d)")
+        );
+
+        for (Pair<List<Integer>, String> variableType : variableTypes) {
+            List<String> variableTypeInstances = new LinkedList<>();
+
+            List<Integer> first = variableType.first;
+            for (int i = 0; i < first.size(); i++) {
+                Integer type = first.get(i);
+
+                if (i == 0) {
+                    variableTypeInstances = getUsedVariable(type);
+                } else {
+                    variableTypeInstances.addAll(getUsedVariable(type));
+                }
+            }
+
+            for (int i = 0, size = variableTypeInstances.size(); i < size; i++) {
+                String instanceName = variableTypeInstances.get(i);
+
+                if (i == 0) data.add(new Item(String.format(variableType.second, size)));
+                data.add(new Item(instanceName, R.string.logic_editor_message_currently_used_variable));
+            }
         }
 
-        ArrayList<String> numbers = getUsedVariable(ExtraMenuBean.VARIABLE_TYPE_NUMBER);
-        for (int i = 0, intsSize = numbers.size(); i < intsSize; i++) {
-            if (i == 0) viewGroup.addView(commonTextView("Number (" + intsSize + ")"));
-            viewGroup.addView(getRemoveVariableCheckBox(numbers.get(i)));
-        }
-
-        ArrayList<String> strs = getUsedVariable(ExtraMenuBean.VARIABLE_TYPE_STRING);
-        for (int i = 0, strsSize = strs.size(); i < strsSize; i++) {
-            if (i == 0) viewGroup.addView(commonTextView("String (" + strsSize + ")"));
-            viewGroup.addView(getRemoveVariableCheckBox(strs.get(i)));
-        }
-
-        ArrayList<String> maps = getUsedVariable(ExtraMenuBean.VARIABLE_TYPE_MAP);
-        for (int i = 0, mapSize = maps.size(); i < mapSize; i++) {
-            if (i == 0) viewGroup.addView(commonTextView("Map (" + mapSize + ")"));
-            viewGroup.addView(getRemoveVariableCheckBox(maps.get(i)));
-        }
-
-        ArrayList<String> vars = getUsedVariable(5);
-        vars.addAll(getUsedVariable(6));
-        for (int i = 0, varsSize = vars.size(); i < varsSize; i++) {
-            if (i == 0) viewGroup.addView(commonTextView("Custom Variable (" + varsSize + ")"));
-            viewGroup.addView(getRemoveVariableCheckBox(vars.get(i)));
-        }
-
-        dialog.setView(var2);
-        dialog.setPositiveButton(Helper.getResString(R.string.common_word_remove), view -> {
-            int childCount = viewGroup.getChildCount();
-
-            for (int i = 0; i < childCount; i++) {
-                if (viewGroup.getChildAt(i) instanceof CheckBox) {
-                    CheckBox variable = (CheckBox) viewGroup.getChildAt(i);
-                    String variableName = variable.getText().toString();
-
-                    if (variable.isChecked()) {
-                        // Since an in-use Variable can't be checked, just remove it
-                        logicEditor.m(variableName);
-                    }
+        dialog.setView(recyclerView);
+        dialog.setPositiveButton(Helper.getResString(R.string.common_word_remove), v -> {
+            for (Item item : data) {
+                if (item.type == Item.TYPE_ITEM && item.isChecked) {
+                    logicEditor.m(item.text);
                 }
             }
             dialog.dismiss();
@@ -279,44 +285,37 @@ public class LogicClickListener implements View.OnClickListener {
         aB dialog = new aB(logicEditor);
         dialog.b(Helper.getResString(R.string.logic_editor_title_remove_list));
         dialog.a(R.drawable.delete_96);
-        View var2 = wB.a(logicEditor, R.layout.property_popup_selector_single);
-        ViewGroup viewGroup = var2.findViewById(R.id.rg_content);
 
-        ArrayList<String> listNumbers = getUsedList(ExtraMenuBean.LIST_TYPE_NUMBER);
-        for (int i = 0, listIntSize = listNumbers.size(); i < listIntSize; i++) {
-            if (i == 0) viewGroup.addView(commonTextView("List Integer (" + listIntSize + ")"));
-            viewGroup.addView(getRemoveListCheckBox(listNumbers.get(i)));
+        RecyclerView recyclerView = new RecyclerView(logicEditor);
+        recyclerView.setLayoutManager(new LinearLayoutManager(null));
+
+        List<Item> data = new LinkedList<>();
+        RemoveAdapter adapter = new RemoveAdapter(logicEditor, data,
+                listName -> logicEditor.o.b(listName) || projectDataManager.b(javaName, listName, eventName));
+        recyclerView.setAdapter(adapter);
+
+        List<Pair<Integer, String>> listTypes = List.of(
+                new Pair<>(ExtraMenuBean.LIST_TYPE_NUMBER, "List Integer (%d)"),
+                new Pair<>(ExtraMenuBean.LIST_TYPE_STRING, "List String (%d)"),
+                new Pair<>(ExtraMenuBean.LIST_TYPE_MAP, "List Map (%d)"),
+                new Pair<>(4, "List Custom (%d)")
+        );
+
+        for (Pair<Integer, String> listType : listTypes) {
+            ArrayList<String> lists = getUsedList(listType.first);
+            for (int i = 0, size = lists.size(); i < size; i++) {
+                String instanceName = lists.get(i);
+
+                if (i == 0) data.add(new Item(String.format(listType.second, size)));
+                data.add(new Item(instanceName, R.string.logic_editor_message_currently_used_list));
+            }
         }
 
-        ArrayList<String> listStrs = getUsedList(ExtraMenuBean.LIST_TYPE_STRING);
-        for (int i = 0, listStrSize = listStrs.size(); i < listStrSize; i++) {
-            if (i == 0) viewGroup.addView(commonTextView("List String (" + listStrSize + ")"));
-            viewGroup.addView(getRemoveListCheckBox(listStrs.get(i)));
-        }
-
-        ArrayList<String> listMaps = getUsedList(ExtraMenuBean.LIST_TYPE_MAP);
-        for (int i = 0, listMapSize = listMaps.size(); i < listMapSize; i++) {
-            if (i == 0) viewGroup.addView(commonTextView("List Map (" + listMapSize + ")"));
-            viewGroup.addView(getRemoveListCheckBox(listMaps.get(i)));
-        }
-
-        ArrayList<String> listCustom = getUsedList(4);
-        for (int i = 0, listCustomSize = listCustom.size(); i < listCustomSize; i++) {
-            if (i == 0) viewGroup.addView(commonTextView("List Custom (" + listCustomSize + ")"));
-            viewGroup.addView(getRemoveListCheckBox(listCustom.get(i)));
-        }
-
-        dialog.a(var2);
-        dialog.b(Helper.getResString(R.string.common_word_remove), view -> {
-            for (int i = 0; i < viewGroup.getChildCount(); i++) {
-                if (viewGroup.getChildAt(i) instanceof CheckBox) {
-                    CheckBox list = (CheckBox) viewGroup.getChildAt(i);
-                    String listName = list.getText().toString();
-
-                    if (list.isChecked()) {
-                        // Since an in-use List can't be checked, just remove it
-                        logicEditor.l(listName);
-                    }
+        dialog.a(recyclerView);
+        dialog.b(Helper.getResString(R.string.common_word_remove), v -> {
+            for (Item item : data) {
+                if (item.type == Item.TYPE_ITEM && item.isChecked) {
+                    logicEditor.l(item.text);
                 }
             }
             dialog.dismiss();
@@ -340,19 +339,6 @@ public class LogicClickListener implements View.OnClickListener {
         return textInputLayout;
     }
 
-    private TextView commonTextView(String text) {
-        TextView textView = new TextView(logicEditor);
-        textView.setText(text);
-        textView.setPadding(
-                (int) getDip(2),
-                (int) getDip(4),
-                (int) getDip(4),
-                (int) getDip(4)
-        );
-        textView.setTextSize(14f);
-        return textView;
-    }
-
     private EditText commonEditText(String hint) {
         EditText editText = new EditText(logicEditor);
         editText.setLayoutParams(new LinearLayout.LayoutParams(
@@ -373,36 +359,138 @@ public class LogicClickListener implements View.OnClickListener {
         return editText;
     }
 
-    private CheckBox getRemoveVariableCheckBox(String variableName) {
-        return commonRemoveCheckBox(
-                logicEditor.o.c(variableName) || projectDataManager.c(javaName, variableName, eventName),
-                variableName,
-                R.string.logic_editor_message_currently_used_variable);
-    }
+    private static class RemoveAdapter extends RecyclerView.a<RecyclerView.v> {
+        private final Context context;
+        private final List<Item> data;
+        private final Function<String, Boolean> isInUseChecker;
 
-    private CheckBox getRemoveListCheckBox(String listName) {
-        return commonRemoveCheckBox(
-                logicEditor.o.b(listName) || projectDataManager.b(javaName, listName, eventName),
-                listName,
-                R.string.logic_editor_message_currently_used_list);
-    }
+        /**
+         * @param isInUseChecker Function that should return whether the name (parameter) is in use.
+         */
+        private RemoveAdapter(Context context, List<Item> data, Function<String, Boolean> isInUseChecker) {
+            this.context = context;
+            this.data = data;
+            this.isInUseChecker = isInUseChecker;
+        }
 
-    private CheckBox commonRemoveCheckBox(boolean hasUses, String name, int toastMessageId) {
-        CheckBox checkBox = new CheckBox(logicEditor);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                (int) getDip(40),
-                1);
-        checkBox.setLayoutParams(params);
-        checkBox.setText(name);
-        checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (buttonView.isChecked()) {
-                if (hasUses) {
-                    SketchwareUtil.toastError(Helper.getResString(toastMessageId), bB.TOAST_WARNING);
-                    buttonView.setChecked(false);
-                }
+        @Override
+        // RecyclerView.Adapter#getItemCount()
+        public int a() {
+            return data.size();
+        }
+
+        @Override
+        // RecyclerView.Adapter#onCreateViewHolder(ViewGroup, int)
+        public RecyclerView.v b(ViewGroup parent, int viewType) {
+            if (viewType == Item.TYPE_TITLE) {
+                TextView textView = new TextView(context);
+                textView.setLayoutParams(new LinearLayout.LayoutParams(
+                        LayoutParams.WRAP_CONTENT,
+                        LayoutParams.WRAP_CONTENT));
+                textView.setPadding(
+                        dpToPx(2),
+                        dpToPx(4),
+                        dpToPx(4),
+                        dpToPx(4)
+                );
+                textView.setTextSize(14);
+                return new TitleHolder(textView);
+            } else if (viewType == Item.TYPE_ITEM) {
+                CheckBox checkBox = new CheckBox(context);
+                checkBox.setLayoutParams(new LinearLayout.LayoutParams(
+                        LayoutParams.MATCH_PARENT,
+                        LayoutParams.WRAP_CONTENT));
+                return new CheckBoxHolder(checkBox);
+            } else {
+                throw new IllegalStateException("Unknown view type " + viewType);
             }
-        });
-        return checkBox;
+        }
+
+        @Override
+        // RecyclerView.Adapter#onBindViewHolder(VH, int)
+        public void b(RecyclerView.v holder, int position) {
+            Item item = data.get(position);
+            // RecyclerView.ViewHolder#getItemViewType()
+            int viewType = holder.i();
+
+            if (viewType == Item.TYPE_TITLE) {
+                TitleHolder titleHolder = (TitleHolder) holder;
+                titleHolder.title.setText(item.text);
+            } else if (viewType == Item.TYPE_ITEM) {
+                CheckBoxHolder checkBoxHolder = (CheckBoxHolder) holder;
+                checkBoxHolder.checkBox.setText(item.text);
+                checkBoxHolder.checkBox.setChecked(item.isChecked);
+
+                checkBoxHolder.checkBox.setOnClickListener(v -> {
+                    boolean isChecked = checkBoxHolder.checkBox.isChecked();
+                    item.isChecked = isChecked;
+                    if (item.type == Item.TYPE_ITEM && isChecked) {
+                        if (isInUseChecker.apply(item.text)) {
+                            //noinspection ConstantConditions Item#inUseMessage can't be null if Item#type is Item#TYPE_ITEM
+                            SketchwareUtil.toastError(Helper.getResString(item.inUseMessage), bB.TOAST_WARNING);
+                            checkBoxHolder.checkBox.performClick();
+                        }
+                    }
+                });
+            } else {
+                throw new IllegalStateException("Unknown view type " + viewType);
+            }
+        }
+
+        @Override
+        // RecyclerView.Adapter#getItemViewType(int)
+        public int b(int position) {
+            return data.get(position).type;
+        }
+
+        private static class CheckBoxHolder extends RecyclerView.v {
+            public final CheckBox checkBox;
+
+            public CheckBoxHolder(View itemView) {
+                super(itemView);
+                checkBox = (CheckBox) itemView;
+            }
+        }
+
+        private static class TitleHolder extends RecyclerView.v {
+            public final TextView title;
+
+            public TitleHolder(View itemView) {
+                super(itemView);
+                title = (TextView) itemView;
+            }
+        }
+    }
+
+    private static class Item {
+        public static final int TYPE_TITLE = 0;
+        public static final int TYPE_ITEM = 1;
+
+        private final int type;
+        private final String text;
+        @StringRes
+        private final Integer inUseMessage;
+
+        private boolean isChecked = false;
+
+        public Item(String title) {
+            type = TYPE_TITLE;
+            text = title;
+            inUseMessage = null;
+        }
+
+        public Item(String itemName, @StringRes int inUseMessage) {
+            type = TYPE_ITEM;
+            text = itemName;
+            this.inUseMessage = inUseMessage;
+        }
+
+        public int getType() {
+            return type;
+        }
+
+        public String getText() {
+            return text;
+        }
     }
 }

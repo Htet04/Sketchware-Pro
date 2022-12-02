@@ -11,6 +11,17 @@ import a.a.a.Gx;
 import mod.hilal.saif.components.ComponentsHandler;
 
 public class ComponentBean extends CollapsibleBean implements Parcelable {
+    public static final Parcelable.Creator<ComponentBean> CREATOR = new Parcelable.Creator<>() {
+        @Override
+        public ComponentBean createFromParcel(Parcel source) {
+            return new ComponentBean(source);
+        }
+
+        @Override
+        public ComponentBean[] newArray(int size) {
+            return new ComponentBean[size];
+        }
+    };
 
     public static final int COMPONENT_TYPE_INTENT = 1;
     public static final int COMPONENT_TYPE_SHAREDPREF = 2;
@@ -46,18 +57,6 @@ public class ComponentBean extends CollapsibleBean implements Parcelable {
     public static final int COMPONENT_TYPE_ONESIGNAL = 32;
     public static final int COMPONENT_TYPE_FACEBOOK_ADS_BANNER = 33;
     public static final int COMPONENT_TYPE_FACEBOOK_ADS_INTERSTITIAL = 34;
-
-    public static final Parcelable.Creator<ComponentBean> CREATOR = new Parcelable.Creator<ComponentBean>() {
-        @Override
-        public ComponentBean createFromParcel(Parcel source) {
-            return new ComponentBean(source);
-        }
-
-        @Override
-        public ComponentBean[] newArray(int size) {
-            return new ComponentBean[size];
-        }
-    };
 
     public Gx classInfo;
     @Expose
@@ -109,11 +108,11 @@ public class ComponentBean extends CollapsibleBean implements Parcelable {
     }
 
     public ComponentBean(Parcel other) {
-        this.type = other.readInt();
-        this.componentId = other.readString();
-        this.param1 = other.readString();
-        this.param2 = other.readString();
-        this.param3 = other.readString();
+        type = other.readInt();
+        componentId = other.readString();
+        param1 = other.readString();
+        param2 = other.readString();
+        param3 = other.readString();
     }
 
     public static String getComponentDocsUrlByTypeName(int type) {

@@ -13,77 +13,77 @@ import mod.agus.jcoderz.handle.component.ConstVarComponent;
 public class jq {
 
     /**
-     * A permission type for {@link jq#addPermission(String, int)}, {@link a#addPermission(int)} and {@link a#b(int)}.
+     * A permission type for {@link jq#addPermission(String, int)}, {@link jq#addPermission(int)} and {@link a#b(int)}.
      *
      * @see android.Manifest.permission#CALL_PHONE
      */
     public static final int PERMISSION_CALL_PHONE = 1;
 
     /**
-     * A permission type for {@link jq#addPermission(String, int)}, {@link a#addPermission(int)} and {@link a#b(int)}.
+     * A permission type for {@link jq#addPermission(String, int)}, {@link jq#addPermission(int)} and {@link a#b(int)}.
      *
      * @see android.Manifest.permission#INTERNET
      */
     public static final int PERMISSION_INTERNET = 2;
 
     /**
-     * A permission type for {@link jq#addPermission(String, int)}, {@link a#addPermission(int)} and {@link a#b(int)}.
+     * A permission type for {@link jq#addPermission(String, int)}, {@link jq#addPermission(int)} and {@link a#b(int)}.
      *
      * @see android.Manifest.permission#VIBRATE
      */
     public static final int PERMISSION_VIBRATE = 4;
 
     /**
-     * A permission type for {@link jq#addPermission(String, int)}, {@link a#addPermission(int)} and {@link a#b(int)}.
+     * A permission type for {@link jq#addPermission(String, int)}, {@link jq#addPermission(int)} and {@link a#b(int)}.
      *
      * @see android.Manifest.permission#ACCESS_NETWORK_STATE
      */
     public static final int PERMISSION_ACCESS_NETWORK_STATE = 8;
 
     /**
-     * A permission type for {@link jq#addPermission(String, int)}, {@link a#addPermission(int)} and {@link a#b(int)}.
+     * A permission type for {@link jq#addPermission(String, int)}, {@link jq#addPermission(int)} and {@link a#b(int)}.
      *
      * @see android.Manifest.permission#CAMERA
      */
     public static final int PERMISSION_CAMERA = 16;
 
     /**
-     * A permission type for {@link jq#addPermission(String, int)}, {@link a#addPermission(int)} and {@link a#b(int)}.
+     * A permission type for {@link jq#addPermission(String, int)}, {@link jq#addPermission(int)} and {@link a#b(int)}.
      *
      * @see android.Manifest.permission#READ_EXTERNAL_STORAGE
      */
     public static final int PERMISSION_READ_EXTERNAL_STORAGE = 32;
 
     /**
-     * A permission type for {@link jq#addPermission(String, int)}, {@link a#addPermission(int)} and {@link a#b(int)}.
+     * A permission type for {@link jq#addPermission(String, int)}, {@link jq#addPermission(int)} and {@link a#b(int)}.
      *
      * @see android.Manifest.permission#WRITE_EXTERNAL_STORAGE
      */
     public static final int PERMISSION_WRITE_EXTERNAL_STORAGE = 64;
 
     /**
-     * A permission type for {@link jq#addPermission(String, int)}, {@link a#addPermission(int)} and {@link a#b(int)}.
+     * A permission type for {@link jq#addPermission(String, int)}, {@link jq#addPermission(int)} and {@link a#b(int)}.
      *
      * @see android.Manifest.permission#RECORD_AUDIO
      */
     public static final int PERMISSION_RECORD_AUDIO = 128;
 
     /**
-     * A permission type for {@link jq#addPermission(String, int)}, {@link a#addPermission(int)} and {@link a#b(int)}.
+     * A permission type for {@link jq#addPermission(String, int)}, {@link jq#addPermission(int)} and {@link a#b(int)}.
      *
      * @see android.Manifest.permission#BLUETOOTH
      */
     public static final int PERMISSION_BLUETOOTH = 256;
 
     /**
-     * A permission type for {@link jq#addPermission(String, int)}, {@link a#addPermission(int)} and {@link a#b(int)}.
+     * A permission type for {@link jq#addPermission(String, int)}, {@link jq#addPermission(int)} and {@link a#b(int)}.
      *
      * @see android.Manifest.permission#BLUETOOTH_ADMIN
      */
     public static final int PERMISSION_BLUETOOTH_ADMIN = 512;
 
     /**
-     * A permission type for {@link jq#addPermission(String, int)}, {@link a#addPermission(int)} and {@link a#b(int)}.
+     * A permission type for {@link jq#addPermission(String, int)}, {@link jq#addPermission(int)} and {@link a#b(int)}.
      *
      * @see android.Manifest.permission#ACCESS_FINE_LOCATION
      */
@@ -273,7 +273,7 @@ public class jq {
         ArrayList<AdTestDeviceBean> testDevices;
         if (!(projectLibraryBean == null || (testDevices = projectLibraryBean.testDevices) == null || testDevices.size() <= 0)) {
             for (AdTestDeviceBean adTestDeviceBean : projectLibraryBean.testDevices) {
-                this.t.add(adTestDeviceBean.deviceId);
+                t.add(adTestDeviceBean.deviceId);
             }
         }
         String reserved1;
@@ -282,7 +282,7 @@ public class jq {
         }
         String reserved2;
         if (projectLibraryBean != null && (reserved2 = projectLibraryBean.reserved2) != null && !reserved2.isEmpty()) {
-            this.interstitialAdUnitId = reserved2.substring(reserved2.lastIndexOf(" : ") + 3);
+            interstitialAdUnitId = reserved2.substring(reserved2.lastIndexOf(" : ") + 3);
         }
         String reserved3;
         if (projectLibraryBean != null && (reserved3 = projectLibraryBean.reserved3) != null && !reserved3.isEmpty()) {
@@ -314,7 +314,7 @@ public class jq {
         }
 
         public boolean b(int i) {
-            return (this.c & i) == i;
+            return (c & i) == i;
         }
 
         /**

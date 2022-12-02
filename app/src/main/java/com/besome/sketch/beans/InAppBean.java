@@ -4,19 +4,18 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 public class InAppBean implements Parcelable {
-    public static final Parcelable.Creator<InAppBean> CREATOR = new Parcelable.Creator<InAppBean>() {
-        /* class com.besome.sketch.beans.InAppBean.AnonymousClass1 */
-
-        @Override // android.os.Parcelable.Creator
-        public InAppBean createFromParcel(Parcel parcel) {
-            return new InAppBean(parcel);
+    public static final Parcelable.Creator<InAppBean> CREATOR = new Parcelable.Creator<>() {
+        @Override
+        public InAppBean createFromParcel(Parcel source) {
+            return new InAppBean(source);
         }
 
-        @Override // android.os.Parcelable.Creator
-        public InAppBean[] newArray(int i) {
-            return new InAppBean[i];
+        @Override
+        public InAppBean[] newArray(int size) {
+            return new InAppBean[size];
         }
     };
+
     public String choose = ProjectLibraryBean.LIB_USE_N;
     public String currency;
     public String desc;
@@ -29,13 +28,13 @@ public class InAppBean implements Parcelable {
     }
 
     public InAppBean(Parcel parcel) {
-        this.sku = parcel.readString();
-        this.title = parcel.readString();
-        this.price = parcel.readString();
-        this.desc = parcel.readString();
-        this.choose = parcel.readString();
-        this.currency = parcel.readString();
-        this.priceL = parcel.readLong();
+        sku = parcel.readString();
+        title = parcel.readString();
+        price = parcel.readString();
+        desc = parcel.readString();
+        choose = parcel.readString();
+        currency = parcel.readString();
+        priceL = parcel.readLong();
     }
 
     public static Parcelable.Creator<InAppBean> getCreator() {
@@ -49,12 +48,12 @@ public class InAppBean implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel parcel, int i) {
-        parcel.writeString(this.sku);
-        parcel.writeString(this.title);
-        parcel.writeString(this.price);
-        parcel.writeString(this.desc);
-        parcel.writeString(this.choose);
-        parcel.writeString(this.currency);
-        parcel.writeLong(this.priceL);
+        parcel.writeString(sku);
+        parcel.writeString(title);
+        parcel.writeString(price);
+        parcel.writeString(desc);
+        parcel.writeString(choose);
+        parcel.writeString(currency);
+        parcel.writeLong(priceL);
     }
 }

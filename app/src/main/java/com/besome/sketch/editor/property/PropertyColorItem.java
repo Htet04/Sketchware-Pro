@@ -1,5 +1,6 @@
 package com.besome.sketch.editor.property;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.view.Gravity;
@@ -15,9 +16,9 @@ import a.a.a.Kw;
 import a.a.a.Zx;
 import a.a.a.mB;
 import a.a.a.wB;
-import a.a.a.xB;
 import mod.hey.studios.util.Helper;
 
+@SuppressLint("ViewConstructor")
 public class PropertyColorItem extends RelativeLayout implements View.OnClickListener {
 
     private Context context;

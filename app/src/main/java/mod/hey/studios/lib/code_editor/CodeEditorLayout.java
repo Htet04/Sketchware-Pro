@@ -99,11 +99,13 @@ public class CodeEditorLayout extends LinearLayout implements TextWatcher {
     }
 
     private void setPreference(String key, boolean value) {
-        sharedpref.edit().putBoolean(key, value).commit();
+        sharedpref.edit().putBoolean(key, value).apply();
     }
 
     private void setPreference(String key, float value) {
-        sharedpref.edit().putFloat(key, value).commit();
+        if (!isInEditMode()) {
+            sharedpref.edit().putFloat(key, value).apply();
+        }
     }
 
     private void loadPreferences() {
@@ -308,9 +310,9 @@ public class CodeEditorLayout extends LinearLayout implements TextWatcher {
         setPreference("dark_theme", dark_theme);
 
         if (type == ColorScheme.JAVA) {
-            this.highlightList = ColorScheme.TYPE_JAVA(colorTheme);
+            highlightList = ColorScheme.TYPE_JAVA(colorTheme);
         } else if (type == ColorScheme.XML) {
-            this.highlightList = ColorScheme.TYPE_XML(colorTheme);
+            highlightList = ColorScheme.TYPE_XML(colorTheme);
         } else {
             return;
         }
