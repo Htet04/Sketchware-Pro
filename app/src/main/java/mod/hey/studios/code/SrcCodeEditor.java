@@ -80,19 +80,9 @@ public class SrcCodeEditor extends AppCompatActivity {
     }
 
     public static void selectTheme(CodeEditor ed, int which) {
-        EditorColorScheme scheme;
+        if (!(ed.getColorScheme() instanceof TextMateColorScheme)) {
+            EditorColorScheme scheme;
 
-        if (ed.getColorScheme() instanceof TextMateColorScheme) {
-            switch (which) {
-                case 1:
-                    scheme = CodeEditorColorSchemes.GITHUB;
-                    break;
-
-                case 3:
-                default:
-                    scheme = CodeEditorColorSchemes.DRACULA;
-            }
-        } else {
             switch (which) {
                 default:
                 case 0:
@@ -119,9 +109,9 @@ public class SrcCodeEditor extends AppCompatActivity {
                     scheme = new SchemeNotepadXX();
                     break;
             }
-        }
 
-        ed.setColorScheme(scheme);
+            ed.setColorScheme(scheme);
+        }
     }
 
     public static String prettifyXml(String xml, int indentAmount, Intent extras) {
@@ -178,21 +168,6 @@ public class SrcCodeEditor extends AppCompatActivity {
         }
     }
 
-    public static String paste(Activity act) {
-        ClipboardManager clipboard = (ClipboardManager) act.getSystemService(Context.CLIPBOARD_SERVICE);
-
-        if (clipboard.hasPrimaryClip()) {
-            ClipDescription desc = clipboard.getPrimaryClipDescription();
-            ClipData data = clipboard.getPrimaryClip();
-
-            if (data != null && desc != null && desc.hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
-                return String.valueOf(data.getItemAt(0).getText());
-            }
-        }
-
-        return "";
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -222,11 +197,11 @@ public class SrcCodeEditor extends AppCompatActivity {
         if (title.endsWith(".java")) {
             editor.setEditorLanguage(new JavaLanguage());
         } else if (title.endsWith(".kt")) {
-            editor.setEditorLanguage(CodeEditorLanguages.KOTLIN);
-            editor.setColorScheme(CodeEditorColorSchemes.DRACULA);
+            editor.setEditorLanguage(CodeEditorLanguages.loadTextMateLanguage(CodeEditorLanguages.SCOPE_NAME_KOTLIN));
+            editor.setColorScheme(CodeEditorColorSchemes.loadTextMateColorScheme(CodeEditorColorSchemes.THEME_DRACULA));
         } else if (title.endsWith(".xml")) {
-            editor.setEditorLanguage(CodeEditorLanguages.XML);
-            editor.setColorScheme(CodeEditorColorSchemes.DRACULA);
+            editor.setEditorLanguage(CodeEditorLanguages.loadTextMateLanguage(CodeEditorLanguages.SCOPE_NAME_XML));
+            editor.setColorScheme(CodeEditorColorSchemes.loadTextMateColorScheme(CodeEditorColorSchemes.THEME_GITHUB));
         }
 
         loadCESettings(this, editor, "act");
@@ -248,7 +223,6 @@ public class SrcCodeEditor extends AppCompatActivity {
                     .setMessage("You have unsaved changes. Are you sure you want to exit?")
                     .setPositiveButton(R.string.common_word_exit, (dialog, which) -> finish())
                     .setNegativeButton(R.string.common_word_cancel, null)
-                    .create()
                     .show();
         }
     }
