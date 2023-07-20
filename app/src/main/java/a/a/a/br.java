@@ -1,13 +1,10 @@
 package a.a.a;
 
-import android.animation.Animator;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,7 +16,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.AsyncDifferConfig;
 import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -33,13 +29,14 @@ import com.besome.sketch.editor.LogicEditorActivity;
 import com.besome.sketch.editor.component.CollapsibleComponentLayout;
 import com.besome.sketch.editor.component.ComponentAddActivity;
 import com.besome.sketch.editor.component.ComponentEventButton;
-import com.besome.sketch.editor.event.CollapsibleButton;
+import com.besome.sketch.lib.base.CollapsibleViewHolder;
+import com.besome.sketch.lib.ui.CollapsibleButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.sketchware.remod.R;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.Executor;
+import java.util.Set;
 
 public class br extends qA implements View.OnClickListener {
     private ProjectFileBean projectFile;
@@ -96,10 +93,8 @@ public class br extends qA implements View.OnClickListener {
                 .build();
         private final RecyclerView.RecycledViewPool eventViewHolders = new RecyclerView.RecycledViewPool();
 
-        private class ViewHolder extends RecyclerView.ViewHolder {
-            private static final Handler handler = new Handler(Looper.getMainLooper());
-            private static final Executor mainThreadExecutor = handler::post;
-
+        private class ViewHolder extends CollapsibleViewHolder {
+            public final LinearLayout root;
             public final LinearLayout optionLayout;
             public final RecyclerView componentEvents;
             public final ImageView icon;
@@ -114,7 +109,8 @@ public class br extends qA implements View.OnClickListener {
             public final ConcatAdapter componentEventsAdapter;
 
             public ViewHolder(@NonNull View itemView) {
-                super(itemView);
+                super(itemView, 200);
+                root = (LinearLayout) itemView;
                 icon = itemView.findViewById(R.id.img_icon);
                 type = itemView.findViewById(R.id.tv_component_type);
                 id = itemView.findViewById(R.id.tv_component_id);
@@ -129,11 +125,13 @@ public class br extends qA implements View.OnClickListener {
                     ComponentBean bean = jC.a(sc_id).a(projectFile.getJavaName(), lastSelectedItem);
                     if (v instanceof CollapsibleButton) {
                         bean.isConfirmation = true;
+                        setAnimateNextTransformation(true);
                         notifyItemChanged(lastSelectedItem);
                     } else {
                         int id = v.getId();
                         if (id == R.id.confirm_no) {
                             bean.isConfirmation = false;
+                            setAnimateNextTransformation(true);
                             notifyItemChanged(lastSelectedItem);
                         } else if (id == R.id.confirm_yes) {
                             jC.a(sc_id).b(projectFile.getJavaName(), bean);
@@ -143,37 +141,8 @@ public class br extends qA implements View.OnClickListener {
                         }
                     }
                 });
-                itemView.setOnClickListener(v -> {
-                    ComponentBean bean = jC.a(sc_id).a(projectFile.getJavaName(), getLayoutPosition());
-                    if (bean.isCollapsed) {
-                        bean.isCollapsed = false;
-                        expand();
-                    } else {
-                        bean.isCollapsed = true;
-                        collapse();
-                    }
-                });
-                menu.setOnClickListener(v -> {
-                    ComponentBean bean = components.get(getLayoutPosition());
-                    if (bean.isCollapsed) {
-                        bean.isCollapsed = false;
-                        expand();
-                    } else {
-                        bean.isCollapsed = true;
-                        collapse();
-                    }
-                });
-                itemView.setOnLongClickListener(v -> {
-                    ComponentBean bean = components.get(getLayoutPosition());
-                    if (bean.isCollapsed) {
-                        bean.isCollapsed = false;
-                        expand();
-                    } else {
-                        bean.isCollapsed = true;
-                        collapse();
-                    }
-                    return true;
-                });
+                onDoneInitializingViews();
+                setOnClickCollapseConfig(v -> v != root);
                 componentEvents.setRecycledViewPool(eventViewHolders);
                 if (componentEvents.getLayoutManager() instanceof LinearLayoutManager manager) {
                     manager.setRecycleChildrenOnDetach(true);
@@ -184,34 +153,44 @@ public class br extends qA implements View.OnClickListener {
                 componentEventsAdapter = new ConcatAdapter(EVENTS_ADAPTER_CONFIG, addedEventsAdapter, availableEventsAdapter);
             }
 
-            private void collapse() {
-                gB.a(menu, 0.0f, null);
-                gB.a(optionLayout, 200, new Animator.AnimatorListener() {
-                    @Override
-                    public void onAnimationStart(@NonNull Animator animation) {
-                    }
+            @Override
+            protected boolean isCollapsed() {
+                return components.get(getLayoutPosition()).isCollapsed;
+            }
 
-                    @Override
-                    public void onAnimationEnd(@NonNull Animator animation) {
-                        optionLayout.setVisibility(View.GONE);
-                    }
+            @Override
+            protected void setIsCollapsed(boolean isCollapsed) {
+                components.get(getLayoutPosition()).isCollapsed = isCollapsed;
+            }
 
-                    @Override
-                    public void onAnimationCancel(@NonNull Animator animation) {
-                    }
+            @NonNull
+            @Override
+            protected ViewGroup getOptionsLayout() {
+                return optionLayout;
+            }
 
-                    @Override
-                    public void onAnimationRepeat(@NonNull Animator animation) {
-                    }
-                });
+            @NonNull
+            @Override
+            protected Set<? extends View> getOnClickCollapseTriggerViews() {
+                return Set.of(menu, root);
+            }
+
+            @NonNull
+            @Override
+            protected Set<? extends View> getOnLongClickCollapseTriggerViews() {
+                return Set.of(root);
+            }
+
+            @Override
+            public void collapse() {
+                super.collapse();
                 eventsPreview.animate().translationX(0.0f).alpha(1.0f).setStartDelay(120L).setDuration(150L).start();
                 componentEvents.animate().translationX(-componentEvents.getWidth()).setDuration(150L).alpha(0.0f).start();
             }
 
-            private void expand() {
-                optionLayout.setVisibility(View.VISIBLE);
-                gB.a(menu, -180.0f, null);
-                gB.b(optionLayout, 200, null);
+            @Override
+            public void expand() {
+                super.expand();
                 eventsPreview.animate().translationX(eventsPreview.getWidth()).alpha(0.0f).setDuration(150L).start();
                 componentEvents.setTranslationX(-componentEvents.getWidth());
                 componentEvents.setAlpha(0.0f);
@@ -230,12 +209,9 @@ public class br extends qA implements View.OnClickListener {
                         return true;
                     }
                 };
-                private static final AsyncDifferConfig<EventBean> CONFIG = new AsyncDifferConfig.Builder<>(DIFF_CALLBACK)
-                        .setBackgroundThreadExecutor(mainThreadExecutor)
-                        .build();
 
                 public AddedEventsAdapter() {
-                    super(CONFIG);
+                    super(DIFF_CALLBACK);
                 }
 
                 @NonNull
@@ -266,12 +242,9 @@ public class br extends qA implements View.OnClickListener {
                         return true;
                     }
                 };
-                private static final AsyncDifferConfig<String> CONFIG = new AsyncDifferConfig.Builder<>(DIFF_CALLBACK)
-                        .setBackgroundThreadExecutor(mainThreadExecutor)
-                        .build();
 
                 public AvailableEventsAdapter() {
-                    super(CONFIG);
+                    super(DIFF_CALLBACK);
                 }
 
                 @NonNull
@@ -371,9 +344,19 @@ public class br extends qA implements View.OnClickListener {
                 holder.optionLayout.setVisibility(View.VISIBLE);
                 holder.menu.setRotation(-180.0f);
                 if (componentBean.isConfirmation) {
-                    holder.collapsibleComponentLayout.showConfirmation();
+                    if (holder.shouldAnimateNextTransformation()) {
+                        holder.collapsibleComponentLayout.showConfirmation();
+                        holder.setAnimateNextTransformation(false);
+                    } else {
+                        holder.collapsibleComponentLayout.showConfirmationWithoutAnimation();
+                    }
                 } else {
-                    holder.collapsibleComponentLayout.hideConfirmation();
+                    if (holder.shouldAnimateNextTransformation()) {
+                        holder.collapsibleComponentLayout.hideConfirmation();
+                        holder.setAnimateNextTransformation(false);
+                    } else {
+                        holder.collapsibleComponentLayout.hideConfirmationWithoutAnimation();
+                    }
                 }
             }
             holder.optionLayout.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;

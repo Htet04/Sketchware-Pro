@@ -110,6 +110,7 @@
                 android:layout_centerVertical="true"
                 android:clickable="true"
                 android:contentDescription="@null"
+                android:focusable="true"
                 android:padding="16dp"
                 android:src="@drawable/ic_arrow_drop_down_grey600_24dp" />
         </RelativeLayout>
@@ -121,7 +122,8 @@
         android:layout_height="48dp"
         android:background="#ffffffff"
         android:orientation="vertical"
-        android:visibility="gone">
+        android:visibility="gone"
+        tools:visibility="visible">
 
         <View
             android:layout_width="match_parent"
@@ -130,10 +132,9 @@
             android:layout_marginRight="16dp"
             android:background="@color/color_secondary" />
 
-        <LinearLayout
+        <com.besome.sketch.editor.event.CollapsibleEventLayout
             android:id="@+id/event_option"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal" />
+            android:layout_height="match_parent" />
     </LinearLayout>
 </LinearLayout>

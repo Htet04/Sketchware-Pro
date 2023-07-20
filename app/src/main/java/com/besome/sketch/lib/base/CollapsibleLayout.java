@@ -14,15 +14,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.besome.sketch.editor.event.CollapsibleButton;
 import com.sketchware.remod.R;
 
 import java.util.List;
 
 import a.a.a.wB;
-import mod.hey.studios.util.Helper;
 
-public abstract class CollapsibleLayout extends FrameLayout {
+public abstract class CollapsibleLayout<T extends View> extends FrameLayout {
     private View confirmYes;
     private View confirmNo;
     private LinearLayout projectButtons;
@@ -31,7 +29,7 @@ public abstract class CollapsibleLayout extends FrameLayout {
     private AnimatorSet flipTopOut;
     private AnimatorSet flipBottomIn;
     private AnimatorSet flipBottomOut;
-    private List<CollapsibleButton> buttons;
+    private List<T> buttons;
 
     public CollapsibleLayout(@NonNull Context context) {
         this(context, null);
@@ -50,10 +48,10 @@ public abstract class CollapsibleLayout extends FrameLayout {
         confirmNo = findViewById(R.id.confirm_no);
         TextView warningMessage = findViewById(R.id.tv_warning_message);
         TextView yes = findViewById(R.id.confirm_yes_text);
-        yes.setText(Helper.getResString(yes, R.string.common_word_continue));
+        yes.setText(getYesLabel());
         TextView no = findViewById(R.id.confirm_no_text);
-        no.setText(Helper.getResString(no, R.string.common_word_cancel));
-        warningMessage.setText(Helper.getResString(warningMessage, R.string.common_message_confirm));
+        no.setText(getNoLabel());
+        warningMessage.setText(getWarningMessage());
         flipTopIn = (AnimatorSet) AnimatorInflater.loadAnimator(context, R.animator.flip_top_in);
         flipTopOut = (AnimatorSet) AnimatorInflater.loadAnimator(context, R.animator.flip_top_out);
         flipBottomIn = (AnimatorSet) AnimatorInflater.loadAnimator(context, R.animator.flip_bottom_in);
@@ -65,12 +63,49 @@ public abstract class CollapsibleLayout extends FrameLayout {
         }
     }
 
-    protected abstract List<CollapsibleButton> initializeButtons(@NonNull Context context);
+    protected abstract List<T> initializeButtons(@NonNull Context context);
+
+    protected abstract CharSequence getWarningMessage();
+
+    protected abstract CharSequence getYesLabel();
+
+    protected abstract CharSequence getNoLabel();
 
     public final void setButtonOnClickListener(View.OnClickListener listener) {
         confirmYes.setOnClickListener(listener);
         confirmNo.setOnClickListener(listener);
         buttons.forEach(v -> v.setOnClickListener(listener));
+    }
+
+    public final void showConfirmationWithoutAnimation() {
+        onShowAnimationStart();
+        projectButtons.setRotationX(180);
+        projectButtons.setAlpha(0);
+        confirmLayout.setRotationX(0);
+        confirmLayout.setAlpha(1);
+        onShowAnimationEnd();
+    }
+
+    public final void hideConfirmationWithoutAnimation() {
+        onHideAnimationStart();
+        projectButtons.setRotationX(0);
+        projectButtons.setAlpha(1);
+        confirmLayout.setRotationX(-180);
+        confirmLayout.setAlpha(0);
+        onHideAnimationEnd();
+    }
+
+    private void onShowAnimationStart() {
+        confirmLayout.setVisibility(VISIBLE);
+        buttons.forEach(button -> button.setEnabled(false));
+        confirmYes.setEnabled(false);
+        confirmNo.setEnabled(false);
+    }
+
+    private void onShowAnimationEnd() {
+        confirmYes.setEnabled(true);
+        confirmNo.setEnabled(true);
+        projectButtons.setVisibility(GONE);
     }
 
     public final void showConfirmation() {
@@ -81,21 +116,26 @@ public abstract class CollapsibleLayout extends FrameLayout {
         animatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                confirmYes.setEnabled(true);
-                confirmNo.setEnabled(true);
-                projectButtons.setVisibility(GONE);
+                onShowAnimationEnd();
             }
 
             @Override
             public void onAnimationStart(Animator animation) {
-                super.onAnimationStart(animation);
-                confirmLayout.setVisibility(VISIBLE);
-                buttons.forEach(button -> button.setEnabled(false));
-                confirmYes.setEnabled(false);
-                confirmNo.setEnabled(false);
+                onShowAnimationStart();
             }
         });
         animatorSet.start();
+    }
+
+    private void onHideAnimationStart() {
+        projectButtons.setVisibility(VISIBLE);
+        confirmYes.setEnabled(false);
+        confirmNo.setEnabled(false);
+    }
+
+    private void onHideAnimationEnd() {
+        buttons.forEach(button -> button.setEnabled(true));
+        confirmLayout.setVisibility(GONE);
     }
 
     public final void hideConfirmation() {
@@ -106,16 +146,12 @@ public abstract class CollapsibleLayout extends FrameLayout {
         animatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                buttons.forEach(button -> button.setEnabled(true));
-                confirmLayout.setVisibility(GONE);
+                onHideAnimationEnd();
             }
 
             @Override
             public void onAnimationStart(Animator animation) {
-                super.onAnimationStart(animation);
-                projectButtons.setVisibility(VISIBLE);
-                confirmYes.setEnabled(false);
-                confirmNo.setEnabled(false);
+                onHideAnimationStart();
             }
         });
         animatorSet.start();

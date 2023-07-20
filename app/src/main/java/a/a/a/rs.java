@@ -1,6 +1,5 @@
 package a.a.a;
 
-import android.animation.Animator;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.ColorMatrix;
@@ -17,7 +16,6 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -36,25 +34,23 @@ import com.besome.sketch.beans.ComponentBean;
 import com.besome.sketch.beans.EventBean;
 import com.besome.sketch.beans.MoreBlockCollectionBean;
 import com.besome.sketch.beans.ProjectFileBean;
-import com.besome.sketch.beans.ProjectResourceBean;
 import com.besome.sketch.beans.ViewBean;
 import com.besome.sketch.editor.LogicEditorActivity;
 import com.besome.sketch.editor.event.AddEventActivity;
-import com.besome.sketch.editor.event.CollapsibleButton;
 import com.besome.sketch.editor.event.CollapsibleEventLayout;
+import com.besome.sketch.lib.base.CollapsibleViewHolder;
+import com.besome.sketch.lib.ui.CollapsibleButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.sketchware.remod.R;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import mod.hey.studios.moreblock.ReturnMoreblockManager;
 import mod.hey.studios.moreblock.importer.MoreblockImporterDialog;
-import mod.hey.studios.util.Helper;
+import mod.jbk.editor.manage.MoreblockImporter;
 
 public class rs extends qA implements View.OnClickListener, MoreblockImporterDialog.CallBack {
     private ProjectFileBean currentActivity;
@@ -77,12 +73,6 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
     private TextView noEvents;
     private TextView importMoreBlockFromCollection;
     private String sc_id;
-    private ArrayList<Pair<Integer, String>> toBeAddedVariables;
-    private ArrayList<Pair<Integer, String>> toBeAddedLists;
-    private ArrayList<ProjectResourceBean> toBeAddedImages;
-    private ArrayList<ProjectResourceBean> toBeAddedSounds;
-    private ArrayList<ProjectResourceBean> toBeAddedFonts;
-    private final oB fileUtil = new oB();
 
     public static int a(int i) {
         if (i == 4) {
@@ -155,30 +145,6 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
         return currentActivity;
     }
 
-    private void maybeAddImageToListOfToBeAddedImages(String imageName) {
-        if (toBeAddedImages == null) {
-            toBeAddedImages = new ArrayList<>();
-        }
-        for (String imageInProjectName : jC.d(sc_id).m()) {
-            if (imageInProjectName.equals(imageName)) {
-                return;
-            }
-        }
-        ProjectResourceBean image = Op.g().a(imageName);
-        if (image != null) {
-            boolean alreadyToBeAdded = false;
-            for (ProjectResourceBean toBeAddedImage : toBeAddedImages) {
-                if (toBeAddedImage.resName.equals(imageName)) {
-                    alreadyToBeAdded = true;
-                    break;
-                }
-            }
-            if (!alreadyToBeAdded) {
-                toBeAddedImages.add(image);
-            }
-        }
-    }
-
     public void refreshEvents() {
         if (currentActivity != null) {
             moreBlocks.clear();
@@ -223,30 +189,6 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
                 }
                 eventAdapter.a(events.get(categoryAdapter.index));
                 eventAdapter.notifyDataSetChanged();
-            }
-        }
-    }
-
-    private void maybeAddFontToListOfToBeAddedFonts(String fontName) {
-        if (toBeAddedFonts == null) {
-            toBeAddedFonts = new ArrayList<>();
-        }
-        for (String fontInProjectName : jC.d(sc_id).k()) {
-            if (fontInProjectName.equals(fontName)) {
-                return;
-            }
-        }
-        ProjectResourceBean font = Np.g().a(fontName);
-        if (font != null) {
-            boolean alreadyToBeAdded = false;
-            for (ProjectResourceBean toBeAddedFont : toBeAddedFonts) {
-                if (toBeAddedFont.resName.equals(fontName)) {
-                    alreadyToBeAdded = true;
-                    break;
-                }
-            }
-            if (!alreadyToBeAdded) {
-                toBeAddedFonts.add(font);
             }
         }
     }
@@ -320,72 +262,6 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
         importMoreBlockFromCollection.setOnClickListener(v -> showImportMoreBlockFromCollectionsDialog());
     }
 
-    private void addMoreBlockFromCollectionsHandleVariables(MoreBlockCollectionBean moreBlock) {
-        toBeAddedVariables = new ArrayList<>();
-        toBeAddedLists = new ArrayList<>();
-        toBeAddedImages = new ArrayList<>();
-        toBeAddedSounds = new ArrayList<>();
-        toBeAddedFonts = new ArrayList<>();
-        for (BlockBean next : moreBlock.blocks) {
-            if (next.opCode.equals("getVar")) {
-                if (next.type.equals("b")) {
-                    maybeAddVariableToListOfToBeAddedVariables(0, next.spec);
-                } else if (next.type.equals("d")) {
-                    maybeAddVariableToListOfToBeAddedVariables(1, next.spec);
-                } else if (next.type.equals("s")) {
-                    maybeAddVariableToListOfToBeAddedVariables(2, next.spec);
-                } else if (next.type.equals("a")) {
-                    maybeAddVariableToListOfToBeAddedVariables(3, next.spec);
-                } else if (next.type.equals("l")) {
-                    if (next.typeName.equals("List Number")) {
-                        maybeAddListToListOfToBeAddedLists(1, next.spec);
-                    } else if (next.typeName.equals("List String")) {
-                        maybeAddListToListOfToBeAddedLists(2, next.spec);
-                    } else if (next.typeName.equals("List Map")) {
-                        maybeAddListToListOfToBeAddedLists(3, next.spec);
-                    }
-                }
-            }
-            ArrayList<Gx> paramClassInfo = next.getParamClassInfo();
-            if (paramClassInfo.size() > 0) {
-                for (int i = 0; i < paramClassInfo.size(); i++) {
-                    Gx gx = paramClassInfo.get(i);
-                    String str = next.parameters.get(i);
-                    if (str.length() > 0 && str.charAt(0) != '@') {
-                        if (gx.b("boolean.SelectBoolean")) {
-                            maybeAddVariableToListOfToBeAddedVariables(0, str);
-                        } else if (gx.b("double.SelectDouble")) {
-                            maybeAddVariableToListOfToBeAddedVariables(1, str);
-                        } else if (gx.b("String.SelectString")) {
-                            maybeAddVariableToListOfToBeAddedVariables(2, str);
-                        } else if (gx.b("Map")) {
-                            maybeAddVariableToListOfToBeAddedVariables(3, str);
-                        } else if (gx.b("ListInt")) {
-                            maybeAddListToListOfToBeAddedLists(1, str);
-                        } else if (gx.b("ListString")) {
-                            maybeAddListToListOfToBeAddedLists(2, str);
-                        } else if (gx.b("ListMap")) {
-                            maybeAddListToListOfToBeAddedLists(3, str);
-                        } else if (!gx.b("resource_bg") && !gx.b("resource")) {
-                            if (gx.b("sound")) {
-                                maybeAddSoundToListOfToBeAddedSounds(str);
-                            } else if (gx.b("font")) {
-                                maybeAddFontToListOfToBeAddedFonts(str);
-                            }
-                        } else {
-                            maybeAddImageToListOfToBeAddedImages(str);
-                        }
-                    }
-                }
-            }
-        }
-        if (toBeAddedVariables.size() <= 0 && toBeAddedLists.size() <= 0 && toBeAddedImages.size() <= 0 && toBeAddedSounds.size() <= 0 && toBeAddedFonts.size() <= 0) {
-            addMoreBlockFromCollectionsCreateEvent(moreBlock);
-        } else {
-            showMoreBlockAutoAddDialog(moreBlock);
-        }
-    }
-
     private void showSaveMoreBlockToCollectionsDialog(int moreBlockPosition) {
         aB aBVar = new aB(requireActivity());
         aBVar.b(xB.b().a(requireContext(), R.string.logic_more_block_favorites_save_title));
@@ -420,38 +296,9 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
         bB.a(requireContext(), xB.b().a(requireContext(), R.string.common_message_complete_reset), 0).show();
     }
 
-    private void addMoreBlockFromCollections(MoreBlockCollectionBean moreBlock) {
-        String blockName = ReturnMoreblockManager.getMbName(ReturnMoreblockManager.getMbNameWithTypeFromSpec(moreBlock.spec));
-
-        boolean duplicateNameFound = false;
-        for (Pair<String, String> projectMoreBlock : jC.a(sc_id).i(currentActivity.getJavaName())) {
-            if (ReturnMoreblockManager.getMbName(projectMoreBlock.first).equals(blockName)) {
-                duplicateNameFound = true;
-                break;
-            }
-        }
-        if (!duplicateNameFound) {
-            addMoreBlockFromCollectionsHandleVariables(moreBlock);
-        } else {
-            showEditMoreBlockNameDialog(moreBlock);
-        }
-    }
-
     @Override
     public void onSelected(MoreBlockCollectionBean bean) {
-        addMoreBlockFromCollections(bean);
-    }
-
-    private void copySoundFromCollectionsToProject(String soundName) {
-        if (Qp.g().b(soundName)) {
-            ProjectResourceBean a2 = Qp.g().a(soundName);
-            try {
-                fileUtil.a(wq.a() + File.separator + "sound" + File.separator + "data" + File.separator + a2.resFullName, wq.t() + File.separator + sc_id + File.separator + a2.resFullName);
-                jC.d(sc_id).c.add(a2);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        new MoreblockImporter(requireActivity(), sc_id, currentActivity).importMoreblock(bean, this::refreshEvents);
     }
 
     private void showImportMoreBlockFromCollectionsDialog() {
@@ -459,120 +306,8 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
         new MoreblockImporterDialog(requireActivity(), moreBlocksInCollections, this).show();
     }
 
-    private void maybeAddVariableToListOfToBeAddedVariables(int variableType, String variableName) {
-        if (toBeAddedVariables == null) {
-            toBeAddedVariables = new ArrayList<>();
-        }
-        for (Pair<Integer, String> variable : jC.a(sc_id).k(currentActivity.getJavaName())) {
-            if (variable.first == variableType && variable.second.equals(variableName)) {
-                return;
-            }
-        }
-        boolean alreadyToBeAdded = false;
-        for (Pair<Integer, String> toBeAddedVariable : toBeAddedVariables) {
-            if (toBeAddedVariable.first == variableType && toBeAddedVariable.second.equals(variableName)) {
-                alreadyToBeAdded = true;
-                break;
-            }
-        }
-        if (!alreadyToBeAdded) {
-            toBeAddedVariables.add(new Pair<>(variableType, variableName));
-        }
-    }
-
-    private void showEditMoreBlockNameDialog(MoreBlockCollectionBean moreBlock) {
-        aB dialog = new aB(requireActivity());
-        dialog.b(xB.b().a(requireContext(), R.string.logic_more_block_title_change_block_name));
-        dialog.a(R.drawable.more_block_96dp);
-
-        View customView = wB.a(requireContext(), R.layout.property_popup_save_to_favorite);
-        ((TextView) customView.findViewById(R.id.tv_favorites_guide)).setText(xB.b().a(requireContext(), R.string.logic_more_block_desc_change_block_name));
-        EditText newName = customView.findViewById(R.id.ed_input);
-        newName.setPrivateImeOptions("defaultInputmode=english;");
-        newName.setLines(1);
-        newName.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-        newName.setImeOptions(EditorInfo.IME_ACTION_DONE);
-
-        List<String> moreBlockNamesWithoutReturnTypes = new LinkedList<>();
-        for (String moreBlockName : jC.a(sc_id).a(currentActivity)) {
-            moreBlockNamesWithoutReturnTypes.add(ReturnMoreblockManager.getMbName(moreBlockName));
-        }
-
-        ZB validator = new ZB(requireContext(), customView.findViewById(R.id.ti_input), uq.b, uq.a(), new ArrayList<>(moreBlockNamesWithoutReturnTypes));
-        dialog.a(customView);
-        dialog.b(xB.b().a(requireContext(), R.string.common_word_save), v -> {
-            if (validator.b()) {
-                String moreBlockName = ReturnMoreblockManager.getMbName(ReturnMoreblockManager.getMbNameWithTypeFromSpec(moreBlock.spec));
-                moreBlock.spec = newName.getText().toString() + moreBlock.spec.substring(moreBlockName.length());
-
-                addMoreBlockFromCollectionsHandleVariables(moreBlock);
-                mB.a(requireContext(), newName);
-                dialog.dismiss();
-            }
-        });
-        dialog.a(xB.b().a(requireContext(), R.string.common_word_cancel), v -> {
-            mB.a(requireContext(), newName);
-            dialog.dismiss();
-        });
-        dialog.show();
-    }
-
-    private void maybeAddSoundToListOfToBeAddedSounds(String soundName) {
-        if (toBeAddedSounds == null) {
-            toBeAddedSounds = new ArrayList<>();
-        }
-        for (String soundInProjectName : jC.d(sc_id).p()) {
-            if (soundInProjectName.equals(soundName)) {
-                return;
-            }
-        }
-        ProjectResourceBean sound = Qp.g().a(soundName);
-        if (sound != null) {
-            boolean alreadyToBeAdded = false;
-            for (ProjectResourceBean toBeAddedSound : toBeAddedSounds) {
-                if (toBeAddedSound.resName.equals(soundName)) {
-                    alreadyToBeAdded = true;
-                    break;
-                }
-            }
-            if (!alreadyToBeAdded) {
-                toBeAddedSounds.add(sound);
-            }
-        }
-    }
-
     public void setCurrentActivity(ProjectFileBean projectFileBean) {
         currentActivity = projectFileBean;
-    }
-
-    private void showMoreBlockAutoAddDialog(MoreBlockCollectionBean moreBlock) {
-        aB aBVar = new aB(requireActivity());
-        aBVar.b(xB.b().a(requireContext(), R.string.logic_more_block_title_add_variable_resource));
-        aBVar.a(R.drawable.break_warning_96_red);
-        aBVar.a(xB.b().a(requireContext(), R.string.logic_more_block_desc_add_variable_resource));
-        aBVar.b(xB.b().a(requireContext(), R.string.common_word_continue), v -> {
-            for (Pair<Integer, String> pair : toBeAddedVariables) {
-                eC eC = jC.a(sc_id);
-                eC.c(currentActivity.getJavaName(), pair.first, pair.second);
-            }
-            for (Pair<Integer, String> pair : toBeAddedLists) {
-                eC eC = jC.a(sc_id);
-                eC.b(currentActivity.getJavaName(), pair.first, pair.second);
-            }
-            for (ProjectResourceBean bean : toBeAddedImages) {
-                copyImageFromCollectionsToProject(bean.resName);
-            }
-            for (ProjectResourceBean bean : toBeAddedSounds) {
-                copySoundFromCollectionsToProject(bean.resName);
-            }
-            for (ProjectResourceBean bean : toBeAddedFonts) {
-                copyFontFromCollectionsToProject(bean.resName);
-            }
-            addMoreBlockFromCollectionsCreateEvent(moreBlock);
-            aBVar.dismiss();
-        });
-        aBVar.a(xB.b().a(requireContext(), R.string.common_word_cancel), Helper.getDialogDismissListener(aBVar));
-        aBVar.show();
     }
 
     private void deleteEvent(EventBean event, int position) {
@@ -581,18 +316,6 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
         events.get(categoryAdapter.index).remove(position);
         eventAdapter.notifyItemRemoved(position);
         eventAdapter.notifyItemRangeChanged(position, eventAdapter.getItemCount());
-    }
-
-    private void copyImageFromCollectionsToProject(String imageName) {
-        if (Op.g().b(imageName)) {
-            ProjectResourceBean image = Op.g().a(imageName);
-            try {
-                fileUtil.a(wq.a() + File.separator + "image" + File.separator + "data" + File.separator + image.resFullName, wq.g() + File.separator + sc_id + File.separator + image.resFullName);
-                jC.d(sc_id).b.add(image);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private void initializeEvents(ArrayList<EventBean> events) {
@@ -660,49 +383,6 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
         } catch (Exception unused2) {
             bB.b(requireContext(), xB.b().a(requireContext(), R.string.common_error_failed_to_save), 0).show();
         }
-    }
-
-    private void maybeAddListToListOfToBeAddedLists(int listType, String listName) {
-        if (toBeAddedLists == null) {
-            toBeAddedLists = new ArrayList<>();
-        }
-        for (Pair<Integer, String> list : jC.a(sc_id).j(currentActivity.getJavaName())) {
-            if (list.first == listType && list.second.equals(listName)) {
-                return;
-            }
-        }
-
-        boolean alreadyToBeAdded = false;
-        for (Pair<Integer, String> toBeAddedList : toBeAddedLists) {
-            if (toBeAddedList.first == listType && toBeAddedList.second.equals(listName)) {
-                alreadyToBeAdded = true;
-                break;
-            }
-        }
-        if (!alreadyToBeAdded) {
-            toBeAddedLists.add(new Pair<>(listType, listName));
-        }
-    }
-
-    private void copyFontFromCollectionsToProject(String fontName) {
-        if (Np.g().b(fontName)) {
-            ProjectResourceBean font = Np.g().a(fontName);
-            try {
-                fileUtil.a(wq.a() + File.separator + "font" + File.separator + "data" + File.separator + font.resFullName, wq.d() + File.separator + sc_id + File.separator + font.resFullName);
-                jC.d(sc_id).d.add(font);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void addMoreBlockFromCollectionsCreateEvent(MoreBlockCollectionBean moreBlock) {
-        String moreBlockName = ReturnMoreblockManager.getMbNameWithTypeFromSpec(moreBlock.spec);
-
-        jC.a(sc_id).a(currentActivity.getJavaName(), moreBlockName, moreBlock.spec);
-        jC.a(sc_id).a(currentActivity.getJavaName(), moreBlockName + "_moreBlock", moreBlock.blocks);
-        bB.a(requireContext(), xB.b().a(requireContext(), R.string.common_message_complete_save), 0).show();
-        refreshEvents();
     }
 
     private class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHolder> {
@@ -856,9 +536,18 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
                 holder.menu.setRotation(-180);
             }
             if (eventBean.isConfirmation) {
-                holder.optionsLayout.showConfirmation();
+                if (holder.shouldAnimateNextTransformation()) {
+                    holder.optionsLayout.showConfirmation();
+                    holder.setAnimateNextTransformation(false);
+                } else {
+                    holder.optionsLayout.showConfirmationWithoutAnimation();
+                }
             } else {
-                holder.optionsLayout.hideConfirmation();
+                if (holder.shouldAnimateNextTransformation()) {
+                    holder.optionsLayout.hideConfirmation();
+                } else {
+                    holder.optionsLayout.hideConfirmationWithoutAnimation();
+                }
             }
             holder.optionContainer.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
         }
@@ -878,12 +567,12 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
             return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.fr_logic_list_item, parent, false));
         }
 
-        private class ViewHolder extends RecyclerView.ViewHolder {
+        private class ViewHolder extends CollapsibleViewHolder {
+            public final LinearLayout root;
             public final ImageView menu;
             public final ImageView preview;
             public final LinearLayout previewContainer;
             public final LinearLayout optionContainer;
-            public final LinearLayout options;
             public final CollapsibleEventLayout optionsLayout;
             public final ImageView icon;
             public final TextView targetType;
@@ -893,7 +582,8 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
             public final TextView description;
 
             public ViewHolder(View itemView) {
-                super(itemView);
+                super(itemView, 200);
+                root = (LinearLayout) itemView;
                 icon = itemView.findViewById(R.id.img_icon);
                 targetType = itemView.findViewById(R.id.tv_target_type);
                 targetId = itemView.findViewById(R.id.tv_target_id);
@@ -904,34 +594,34 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
                 preview = itemView.findViewById(R.id.img_preview);
                 previewContainer = itemView.findViewById(R.id.ll_preview);
                 optionContainer = itemView.findViewById(R.id.event_option_layout);
-                options = itemView.findViewById(R.id.event_option);
-                optionsLayout = new CollapsibleEventLayout(requireContext());
-                optionsLayout.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                options.addView(optionsLayout);
+                optionsLayout = itemView.findViewById(R.id.event_option);
                 optionsLayout.setButtonOnClickListener(v -> {
                     if (!mB.a()) {
                         EventBean eventBean = (events.get(categoryAdapter.index)).get(getLayoutPosition());
-                        if (v instanceof CollapsibleButton) {
-                            int i = ((CollapsibleButton) v).getButtonId();
-                            if (i == 2) {
-                                eventBean.buttonPressed = i;
+                        if (v instanceof CollapsibleButton button) {
+                            setAnimateNextTransformation(true);
+                            int id = button.getButtonId();
+                            if (id == 2) {
+                                eventBean.buttonPressed = id;
                                 eventBean.isConfirmation = false;
                                 eventBean.isCollapsed = false;
                                 notifyItemChanged(getLayoutPosition());
                                 showSaveMoreBlockToCollectionsDialog(getLayoutPosition());
                             } else {
-                                eventBean.buttonPressed = i;
+                                eventBean.buttonPressed = id;
                                 eventBean.isConfirmation = true;
                                 notifyItemChanged(getLayoutPosition());
                             }
                         } else {
                             if (v.getId() == R.id.confirm_no) {
                                 eventBean.isConfirmation = false;
+                                setAnimateNextTransformation(true);
                                 notifyItemChanged(getLayoutPosition());
                             } else if (v.getId() == R.id.confirm_yes) {
                                 if (eventBean.buttonPressed == 0) {
                                     eventBean.isConfirmation = false;
                                     eventBean.isCollapsed = true;
+                                    setAnimateNextTransformation(true);
                                     resetEvent(eventBean);
                                     notifyItemChanged(getLayoutPosition());
                                 } else if (eventBean.buttonPressed == 1) {
@@ -947,28 +637,8 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
                         }
                     }
                 });
-                menu.setOnClickListener(v -> {
-                    EventBean eventBean = events.get(categoryAdapter.index).get(getLayoutPosition());
-                    if (eventBean.isCollapsed) {
-                        eventBean.isCollapsed = false;
-                        showOptions();
-                    } else {
-                        eventBean.isCollapsed = true;
-                        hideOptions();
-                    }
-                });
-                itemView.setOnLongClickListener(v -> {
-                    EventBean eventBean = events.get(categoryAdapter.index).get(getLayoutPosition());
-                    if (eventBean.isCollapsed) {
-                        eventBean.isCollapsed = false;
-                        showOptions();
-                    } else {
-                        eventBean.isCollapsed = true;
-                        hideOptions();
-                    }
-                    return true;
-                });
-                itemView.setOnClickListener(v -> {
+                onDoneInitializingViews();
+                root.setOnClickListener(v -> {
                     if (!mB.a()) {
                         EventBean eventBean = events.get(categoryAdapter.index).get(getLayoutPosition());
                         openEvent(eventBean.targetId, eventBean.eventName, description.getText().toString());
@@ -976,32 +646,32 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
                 });
             }
 
-            private void hideOptions() {
-                gB.a(menu, 0, null);
-                gB.a(optionContainer, 200, new Animator.AnimatorListener() {
-                    @Override
-                    public void onAnimationStart(Animator animation) {
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        optionContainer.setVisibility(View.GONE);
-                    }
-
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animator animation) {
-                    }
-                });
+            @Override
+            protected boolean isCollapsed() {
+                return events.get(categoryAdapter.index).get(getLayoutPosition()).isCollapsed;
             }
 
-            private void showOptions() {
-                optionContainer.setVisibility(View.VISIBLE);
-                gB.a(menu, -180, null);
-                gB.b(optionContainer, 200, null);
+            @Override
+            protected void setIsCollapsed(boolean isCollapsed) {
+                events.get(categoryAdapter.index).get(getLayoutPosition()).isCollapsed = isCollapsed;
+            }
+
+            @NonNull
+            @Override
+            protected ViewGroup getOptionsLayout() {
+                return optionContainer;
+            }
+
+            @NonNull
+            @Override
+            protected Set<? extends View> getOnClickCollapseTriggerViews() {
+                return Set.of(menu);
+            }
+
+            @NonNull
+            @Override
+            protected Set<? extends View> getOnLongClickCollapseTriggerViews() {
+                return Set.of(root);
             }
         }
     }
