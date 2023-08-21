@@ -9,6 +9,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.StrictMode;
 import android.system.Os;
 import android.text.TextUtils;
@@ -28,6 +29,7 @@ import com.iyxan23.zipalignjava.ZipAlign;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -276,7 +278,7 @@ public class ProjectBuilder {
 
         /* Add used built-in libraries to the classpath */
         for (Jp library : builtInLibraryManager.getLibraries()) {
-            classpath.append(":").append(BuiltInLibraries.getLibraryClassesJarPathString(library.a()));
+            classpath.append(":").append(BuiltInLibraries.getLibraryClassesJarPathString(library.getName()));
         }
 
         /* Add local libraries to the classpath */
@@ -473,8 +475,8 @@ public class ProjectBuilder {
     public String getLibraryPackageNames() {
         StringBuilder extraPackages = new StringBuilder();
         for (Jp library : builtInLibraryManager.getLibraries()) {
-            if (library.c()) {
-                extraPackages.append(library.b()).append(":");
+            if (library.hasResources()) {
+                extraPackages.append(library.getPackageName()).append(":");
             }
         }
         return extraPackages + mll.getPackageNameLocalLibrary();
@@ -577,7 +579,7 @@ public class ProjectBuilder {
             ApkBuilder apkBuilder = new ApkBuilder(new File(yq.unsignedUnalignedApkPath), new File(yq.resourcesApkPath), new File(firstDexPath), null, null, System.out);
 
             for (Jp library : builtInLibraryManager.getLibraries()) {
-                apkBuilder.addResourcesFromJar(BuiltInLibraries.getLibraryClassesJarPath(library.a()));
+                apkBuilder.addResourcesFromJar(BuiltInLibraries.getLibraryClassesJarPath(library.getName()));
             }
 
             for (String jarPath : mll.getJarLocalLibrary().split(":")) {
@@ -654,7 +656,7 @@ public class ProjectBuilder {
 
         /* Add used built-in libraries' DEX files */
         for (Jp builtInLibrary : builtInLibraryManager.getLibraries()) {
-            dexes.add(BuiltInLibraries.getLibraryDexFile(builtInLibrary.a()));
+            dexes.add(BuiltInLibraries.getLibraryDexFile(builtInLibrary.getName()));
         }
 
         /* Add local libraries' main DEX files */
@@ -716,19 +718,20 @@ public class ProjectBuilder {
      * @throws By If anything goes wrong while extracting
      */
     public void maybeExtractAapt2() throws By {
-        String aapt2PathInAssets = "aapt/";
-        if (GB.a().toLowerCase().contains("x86")) {
-            aapt2PathInAssets += "aapt2-x86";
-        } else {
-            aapt2PathInAssets += "aapt2-arm";
-        }
+        var abi = Build.SUPPORTED_ABIS[0];
         try {
-            if (hasFileChanged(aapt2PathInAssets, aapt2Binary.getAbsolutePath())) {
+            if (hasFileChanged("aapt/aapt2-" + abi, aapt2Binary.getAbsolutePath())) {
                 Os.chmod(aapt2Binary.getAbsolutePath(), S_IRUSR | S_IWUSR | S_IXUSR);
             }
         } catch (Exception e) {
             LogUtil.e(TAG, "Failed to extract AAPT2 binaries", e);
-            throw new By("Couldn't extract AAPT2 binaries! Message: " + e.getMessage());
+            // noinspection ConstantValue: the bytecode's lying
+            throw new By(
+                    e instanceof FileNotFoundException fileNotFoundException ?
+                            "Looks like the device's architecture (" + abi + ") isn't supported.\n"
+                                    + Log.getStackTraceString(fileNotFoundException)
+                            : "Couldn't extract AAPT2 binaries! Message: " + e.getMessage()
+            );
         }
     }
 
@@ -736,8 +739,7 @@ public class ProjectBuilder {
      * Checks if we need to extract any library/dependency from assets to filesDir,
      * and extracts them, if needed. Also initializes used built-in libraries.
      */
-    public void getBuiltInLibrariesReady() {
-        BuiltInLibraries.extractCompileAssets(progressReceiver);
+    public void buildBuiltInLibraryInformation() {
         if (yq.N.g) {
             builtInLibraryManager.addLibrary(BuiltInLibraries.ANDROIDX_APPCOMPAT);
             builtInLibraryManager.addLibrary(BuiltInLibraries.ANDROIDX_COORDINATORLAYOUT);
@@ -779,6 +781,10 @@ public class ProjectBuilder {
         ExtLibSelected.addUsedDependencies(yq.N.x, builtInLibraryManager);
     }
 
+    public BuiltInLibraryManager getBuiltInLibraryManager() {
+        return builtInLibraryManager;
+    }
+
     /**
      * Sign the debug APK file with testkey.
      * <p>
@@ -800,7 +806,7 @@ public class ProjectBuilder {
      */
     private void proguardAddLibConfigs(List<String> args) {
         for (Jp library : builtInLibraryManager.getLibraries()) {
-            File config = BuiltInLibraries.getLibraryProguardConfiguration(library.a());
+            File config = BuiltInLibraries.getLibraryProguardConfiguration(library.getName());
             if (config.exists()) {
                 args.add("-include");
                 args.add(config.getAbsolutePath());
@@ -822,10 +828,10 @@ public class ProjectBuilder {
     private String getRJavaRules() {
         StringBuilder sb = new StringBuilder("# R.java rules");
         for (Jp jp : builtInLibraryManager.getLibraries()) {
-            if (jp.c() && !jp.b().isEmpty()) {
+            if (jp.hasResources() && !jp.getPackageName().isEmpty()) {
                 sb.append("\n");
                 sb.append("-keep class ");
-                sb.append(jp.b());
+                sb.append(jp.getPackageName());
                 sb.append(".** { *; }");
             }
         }
@@ -852,7 +858,7 @@ public class ProjectBuilder {
         config.add(proguard.getCustomProguardRules());
         var rules = new ArrayList<>(Arrays.asList(getRJavaRules().split("\n")));
         for (Jp library : builtInLibraryManager.getLibraries()) {
-            File f = BuiltInLibraries.getLibraryProguardConfiguration(library.a());
+            File f = BuiltInLibraries.getLibraryProguardConfiguration(library.getName());
             if (f.exists()) {
                 config.add(f.getAbsolutePath());
             }

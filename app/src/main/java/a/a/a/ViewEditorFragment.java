@@ -46,7 +46,7 @@ public class ViewEditorFragment extends qA {
         setHasOptionsMenu(true);
         viewEditor = viewGroup.findViewById(R.id.view_editor);
         viewEditor.setScreenType(getResources().getConfiguration().orientation);
-        viewProperty = getActivity().findViewById(R.id.view_property);
+        viewProperty = requireActivity().findViewById(R.id.view_property);
         viewProperty.setOnPropertyListener(new Iw() {
             @Override
             public void a() {
@@ -55,7 +55,7 @@ public class ViewEditorFragment extends qA {
 
             @Override
             public void a(String s, ViewBean viewBean) {
-                b(viewBean);
+                openPropertyActivity(viewBean);
             }
         });
         viewProperty.setOnPropertyValueChangedListener(viewBean -> {
@@ -98,7 +98,7 @@ public class ViewEditorFragment extends qA {
             @Override
             public void b() {
                 q = true;
-                ((DesignActivity) getActivity()).b(false);
+                ((DesignActivity) requireActivity()).setTouchEventEnabled(false);
             }
 
             @Override
@@ -109,7 +109,7 @@ public class ViewEditorFragment extends qA {
             @Override
             public void d() {
                 q = false;
-                ((DesignActivity) getActivity()).b(true);
+                ((DesignActivity) requireActivity()).setTouchEventEnabled(true);
             }
         });
         viewEditor.setOnHistoryChangeListener(this::invalidateOptionsMenu);
@@ -144,14 +144,14 @@ public class ViewEditorFragment extends qA {
     }
 
     private void toLogicEditorActivity(String eventId, String eventName, String eventName2) {
-        Intent intent = new Intent(getContext(), LogicEditorActivity.class);
+        Intent intent = new Intent(requireContext(), LogicEditorActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.putExtra("sc_id", sc_id);
         intent.putExtra("id", eventId);
         intent.putExtra("event", eventName);
         intent.putExtra("project_file", projectFileBean);
         intent.putExtra("event_text", eventName2);
-        getContext().startActivity(intent);
+        requireContext().startActivity(intent);
     }
 
     public void a(ArrayList<ViewBean> viewBeans) {
@@ -160,9 +160,9 @@ public class ViewEditorFragment extends qA {
     }
 
     public void a(boolean var1) {
-        f();
+        startAnimation();
         if (!p || !var1) {
-            c();
+            cancelAnimations();
             if (var1) {
                 n.start();
             } else if (p) {
@@ -173,8 +173,8 @@ public class ViewEditorFragment extends qA {
         }
     }
 
-    public void b(ViewBean viewBean) {
-        Intent intent = new Intent(getContext(), PropertyActivity.class);
+    public void openPropertyActivity(ViewBean viewBean) {
+        Intent intent = new Intent(requireContext(), PropertyActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.putExtra("sc_id", sc_id);
         intent.putExtra("bean", viewBean);
@@ -192,7 +192,7 @@ public class ViewEditorFragment extends qA {
         viewEditor.requestLayout();
     }
 
-    private void c() {
+    private void cancelAnimations() {
         if (n.isRunning()) n.cancel();
         if (o.isRunning()) o.cancel();
     }
@@ -210,112 +210,69 @@ public class ViewEditorFragment extends qA {
     }
 
     private void e() {
-        viewEditor.d();
+        viewEditor.removeWidgetsAndLayouts();
         viewEditor.setPaletteLayoutVisible(View.VISIBLE);
-        viewEditor.a(PaletteWidget.a.a, "");
-        viewEditor.a(PaletteWidget.a.b, "");
-        viewEditor.a(PaletteWidget.b.b, "", "TextView", "TextView");
-        if (projectFileBean != null && projectFileBean.fileType == 7) {
-            viewEditor.a(PaletteWidget.a.c, "");
-            viewEditor.a(PaletteWidget.a.d, "");
-            viewEditor.a(PaletteWidget.b.c, "", "EditText", "Edit Text");
-            viewEditor.extraWidget("", "AutoCompleteTextView", "AutoCompleteTextView");
-            viewEditor.extraWidget("", "MultiAutoCompleteTextView", "MultiAutoCompleteTextView");
-            viewEditor.a(PaletteWidget.b.a, "", "Button", "Button");
-            viewEditor.a(PaletteWidget.b.d, "", "ImageView", "default_image");
-            viewEditor.a(PaletteWidget.b.g, "", "CheckBox", "CheckBox");
-            viewEditor.extraWidget("", "RadioButton", "RadioButton");
-            viewEditor.a(PaletteWidget.b.i, "", "Switch", "Switch");
-            viewEditor.a(PaletteWidget.b.j, "", "SeekBar", "SeekBar");
-            viewEditor.a(PaletteWidget.b.m, "", "ProgressBar", "ProgressBar");
-            viewEditor.extraWidget("", "RatingBar", "RatingBar");
-            viewEditor.extraWidget("", "AnalogClock", "AnalogClock");
-            viewEditor.extraWidget("", "TimePicker", "TimePicker");
-            viewEditor.extraWidget("", "DatePicker", "DatePicker");
-            viewEditor.a(PaletteWidget.b.f, "", "Spinner", "Spinner");
-            viewEditor.a(PaletteWidget.b.h, "", "WebView", "WebView");
-            viewEditor.extraWidget("", "VideoView", "VideoView");
-            viewEditor.extraWidget("", "BadgeView", "BadgeView");
-            viewEditor.a(PaletteWidget.b.l, "", "AdView", "AdView");
-        } else {
-            if (projectFileBean != null && projectFileBean.fileType == 6) {
-                viewEditor.a(PaletteWidget.a.c, "");
-                viewEditor.a(PaletteWidget.a.d, "");
-                viewEditor.a(PaletteWidget.b.c, "", "EditText", "Edit Text");
-                viewEditor.extraWidget("", "AutoCompleteTextView", "AutoCompleteTextView");
-                viewEditor.extraWidget("", "MultiAutoCompleteTextView", "MultiAutoCompleteTextView");
-                viewEditor.a(PaletteWidget.b.a, "", "Button", "Button");
-                viewEditor.a(PaletteWidget.b.d, "", "ImageView", "default_image");
-                viewEditor.a(PaletteWidget.b.g, "", "CheckBox", "CheckBox");
-                viewEditor.extraWidget("", "RadioButton", "RadioButton");
-                viewEditor.a(PaletteWidget.b.i, "", "Switch", "Switch");
-                viewEditor.a(PaletteWidget.b.j, "", "SeekBar", "SeekBar");
-                viewEditor.a(PaletteWidget.b.m, "", "ProgressBar", "ProgressBar");
-                viewEditor.extraWidget("", "RatingBar", "RatingBar");
-                viewEditor.extraWidget("", "AnalogClock", "AnalogClock");
-                viewEditor.extraWidget("", "TimePicker", "TimePicker");
-                viewEditor.extraWidget("", "DatePicker", "DatePicker");
-                viewEditor.a(PaletteWidget.b.f, "", "Spinner", "Spinner");
-                viewEditor.a(PaletteWidget.b.h, "", "WebView", "WebView");
-                viewEditor.extraWidget("", "VideoView", "VideoView");
-                viewEditor.extraWidget("", "BadgeView", "BadgeView");
-                viewEditor.a(PaletteWidget.b.l, "", "AdView", "AdView");
-            } else {
-                viewEditor.a(PaletteWidget.a.c, "");
-                viewEditor.a(PaletteWidget.a.d, "");
-                viewEditor.extraWidgetLayout("", "RadioGroup");
-                viewEditor.i.extraTitle("AndroidX", 0);
-                viewEditor.extraWidgetLayout("", "TabLayout");
-                viewEditor.extraWidgetLayout("", "BottomNavigationView");
-                viewEditor.extraWidgetLayout("", "CollapsingToolbarLayout");
-                viewEditor.extraWidgetLayout("", "CardView");
-                viewEditor.extraWidgetLayout("", "TextInputLayout");
-                viewEditor.extraWidgetLayout("", "SwipeRefreshLayout");
-                viewEditor.a(PaletteWidget.b.c, "", "EditText", "Edit Text");
-                viewEditor.extraWidget("", "AutoCompleteTextView", "AutoCompleteTextView");
-                viewEditor.extraWidget("", "MultiAutoCompleteTextView", "MultiAutoCompleteTextView");
-                viewEditor.a(PaletteWidget.b.a, "", "Button", "Button");
-                viewEditor.extraWidget("", "MaterialButton", "MaterialButton");
-                viewEditor.a(PaletteWidget.b.d, "", "ImageView", "default_image");
-                viewEditor.extraWidget("", "CircleImageView", "default_image");
-                viewEditor.a(PaletteWidget.b.g, "", "CheckBox", "CheckBox");
-                viewEditor.extraWidget("", "RadioButton", "RadioButton");
-                viewEditor.a(PaletteWidget.b.i, "", "Switch", "Switch");
-                viewEditor.a(PaletteWidget.b.j, "", "SeekBar", "SeekBar");
-                viewEditor.a(PaletteWidget.b.m, "", "ProgressBar", "ProgressBar");
-                viewEditor.extraWidget("", "RatingBar", "RatingBar");
-                viewEditor.extraWidget("", "SearchView", "SearchView");
-                viewEditor.extraWidget("", "VideoView", "VideoView");
-                viewEditor.a(PaletteWidget.b.h, "", "WebView", "WebView");
-                viewEditor.i.extraTitle("List", 1);
-                viewEditor.a(PaletteWidget.b.e, "", "ListView", "ListView");
-                viewEditor.extraWidget("", "GridView", "GridView");
-                viewEditor.extraWidget("", "RecyclerView", "RecyclerView");
-                viewEditor.a(PaletteWidget.b.f, "", "Spinner", "Spinner");
-                viewEditor.extraWidget("", "ViewPager", "ViewPager");
-                viewEditor.i.extraTitle("Library", 1);
-                viewEditor.extraWidget("", "BadgeView", "BadgeView");
-                viewEditor.extraWidget("", "WaveSideBar", "WaveSideBar");
-                viewEditor.extraWidget("", "PatternLockView", "PatternLockView");
-                viewEditor.extraWidget("", "CodeView", "CodeView");
-                viewEditor.extraWidget("", "LottieAnimation", "LottieAnimation");
-                viewEditor.extraWidget("", "OTPView", "OTPView");
-                viewEditor.i.extraTitle("Google", 1);
-                viewEditor.a(PaletteWidget.b.l, "", "AdView", "AdView");
-                viewEditor.a(PaletteWidget.b.n, "", "MapView", "MapView");
-                viewEditor.extraWidget("", "SignInButton", "SignInButton");
-                viewEditor.extraWidget("", "YoutubePlayer", "YoutubePlayer");
-                viewEditor.i.extraTitle("Date & Time", 1);
-                viewEditor.extraWidget("", "AnalogClock", "AnalogClock");
-                viewEditor.extraWidget("", "DigitalClock", "DigitalClock");
-                viewEditor.extraWidget("", "TimePicker", "TimePicker");
-                viewEditor.extraWidget("", "DatePicker", "DatePicker");
-                viewEditor.a(PaletteWidget.b.k, "", "CalendarView", "CalendarView");
-            }
-        }
+        viewEditor.addWidgetLayout(PaletteWidget.a.a, "");
+        viewEditor.addWidgetLayout(PaletteWidget.a.b, "");
+        viewEditor.addWidget(PaletteWidget.b.b, "", "TextView", "TextView");
+        viewEditor.addWidgetLayout(PaletteWidget.a.c, "");
+        viewEditor.addWidgetLayout(PaletteWidget.a.d, "");
+        viewEditor.extraWidgetLayout("", "RadioGroup");
+
+        viewEditor.paletteWidget.extraTitle("AndroidX", 0);
+        viewEditor.extraWidgetLayout("", "TabLayout");
+        viewEditor.extraWidgetLayout("", "BottomNavigationView");
+        viewEditor.extraWidgetLayout("", "CollapsingToolbarLayout");
+        viewEditor.extraWidgetLayout("", "CardView");
+        viewEditor.extraWidgetLayout("", "TextInputLayout");
+        viewEditor.extraWidgetLayout("", "SwipeRefreshLayout");
+
+        viewEditor.addWidget(PaletteWidget.b.c, "", "EditText", "Edit Text");
+        viewEditor.extraWidget("", "AutoCompleteTextView", "AutoCompleteTextView");
+        viewEditor.extraWidget("", "MultiAutoCompleteTextView", "MultiAutoCompleteTextView");
+        viewEditor.addWidget(PaletteWidget.b.a, "", "Button", "Button");
+        viewEditor.extraWidget("", "MaterialButton", "MaterialButton");
+        viewEditor.addWidget(PaletteWidget.b.d, "", "ImageView", "default_image");
+        viewEditor.extraWidget("", "CircleImageView", "default_image");
+        viewEditor.addWidget(PaletteWidget.b.g, "", "CheckBox", "CheckBox");
+        viewEditor.extraWidget("", "RadioButton", "RadioButton");
+        viewEditor.addWidget(PaletteWidget.b.i, "", "Switch", "Switch");
+        viewEditor.addWidget(PaletteWidget.b.j, "", "SeekBar", "SeekBar");
+        viewEditor.addWidget(PaletteWidget.b.m, "", "ProgressBar", "ProgressBar");
+        viewEditor.extraWidget("", "RatingBar", "RatingBar");
+        viewEditor.extraWidget("", "SearchView", "SearchView");
+        viewEditor.extraWidget("", "VideoView", "VideoView");
+        viewEditor.addWidget(PaletteWidget.b.h, "", "WebView", "WebView");
+
+        viewEditor.paletteWidget.extraTitle("List", 1);
+        viewEditor.addWidget(PaletteWidget.b.e, "", "ListView", "ListView");
+        viewEditor.extraWidget("", "GridView", "GridView");
+        viewEditor.extraWidget("", "RecyclerView", "RecyclerView");
+        viewEditor.addWidget(PaletteWidget.b.f, "", "Spinner", "Spinner");
+        viewEditor.extraWidget("", "ViewPager", "ViewPager");
+
+        viewEditor.paletteWidget.extraTitle("Library", 1);
+        viewEditor.extraWidget("", "WaveSideBar", "WaveSideBar");
+        viewEditor.extraWidget("", "PatternLockView", "PatternLockView");
+        viewEditor.extraWidget("", "CodeView", "CodeView");
+        viewEditor.extraWidget("", "LottieAnimation", "LottieAnimation");
+        viewEditor.extraWidget("", "OTPView", "OTPView");
+
+        viewEditor.paletteWidget.extraTitle("Google", 1);
+        viewEditor.addWidget(PaletteWidget.b.l, "", "AdView", "AdView");
+        viewEditor.addWidget(PaletteWidget.b.n, "", "MapView", "MapView");
+        viewEditor.extraWidget("", "SignInButton", "SignInButton");
+        viewEditor.extraWidget("", "YoutubePlayer", "YoutubePlayer");
+
+        viewEditor.paletteWidget.extraTitle("Date & Time", 1);
+        viewEditor.extraWidget("", "AnalogClock", "AnalogClock");
+        viewEditor.extraWidget("", "DigitalClock", "DigitalClock");
+        viewEditor.extraWidget("", "TimePicker", "TimePicker");
+        viewEditor.extraWidget("", "DatePicker", "DatePicker");
+        viewEditor.addWidget(PaletteWidget.b.k, "", "CalendarView", "CalendarView");
     }
 
-    private void f() {
+    private void startAnimation() {
         if (n == null) {
             n = ObjectAnimator.ofFloat(viewProperty, View.TRANSLATION_Y, 0.0F);
             n.setDuration(700L);
@@ -323,7 +280,7 @@ public class ViewEditorFragment extends qA {
         }
 
         if (o == null) {
-            o = ObjectAnimator.ofFloat(viewProperty, View.TRANSLATION_Y, wB.a(getActivity(), (float) viewProperty.getHeight()));
+            o = ObjectAnimator.ofFloat(viewProperty, View.TRANSLATION_Y, wB.a(requireActivity(), (float) viewProperty.getHeight()));
             o.setDuration(300L);
             o.setInterpolator(new DecelerateInterpolator());
         }
@@ -333,52 +290,44 @@ public class ViewEditorFragment extends qA {
         return p;
     }
 
-    private void h() {
+    private void onRedo() {
         if (!q) {
             HistoryViewBean historyViewBean = cC.c(sc_id).h(projectFileBean.getXmlName());
-            if (historyViewBean == null) {
-                invalidateOptionsMenu();
-            } else {
+            if (historyViewBean != null) {
                 int actionType = historyViewBean.getActionType();
-                sy widgetItemView;
                 if (actionType == HistoryViewBean.ACTION_TYPE_ADD) {
                     for (ViewBean viewBean : historyViewBean.getAddedData()) {
                         jC.a(sc_id).a(projectFileBean.getXmlName(), viewBean);
                     }
-                    widgetItemView = viewEditor.a(historyViewBean.getAddedData(), false);
-                    viewEditor.a(widgetItemView, false);
-                } else {
-                    if (actionType == HistoryViewBean.ACTION_TYPE_UPDATE) {
-                        ViewBean prevUpdateData = historyViewBean.getPrevUpdateData();
-                        ViewBean currentUpdateData = historyViewBean.getCurrentUpdateData();
-                        if (!prevUpdateData.id.equals(currentUpdateData.id)) {
-                            currentUpdateData.preId = prevUpdateData.id;
-                        }
-
-                        if (currentUpdateData.id.equals("_fab")) {
-                            jC.a(sc_id).h(projectFileBean.getXmlName()).copy(currentUpdateData);
-                        } else {
-                            jC.a(sc_id).c(projectFileBean.getXmlName(), prevUpdateData.id).copy(currentUpdateData);
-                        }
-
-                        widgetItemView = viewEditor.e(currentUpdateData);
-                        viewEditor.a(widgetItemView, false);
-                    } else if (actionType == HistoryViewBean.ACTION_TYPE_REMOVE) {
-                        for (ViewBean viewBean : historyViewBean.getRemovedData()) {
-                            jC.a(sc_id).a(projectFileBean, viewBean);
-                        }
-                        viewEditor.b(historyViewBean.getRemovedData(), false);
-                        viewEditor.i();
-                    } else if (actionType == HistoryViewBean.ACTION_TYPE_MOVE) {
-                        ViewBean movedData = historyViewBean.getMovedData();
-                        ViewBean viewBean = jC.a(sc_id).c(projectFileBean.getXmlName(), movedData.id);
-                        viewBean.copy(movedData);
-                        widgetItemView = viewEditor.b(viewBean, false);
-                        viewEditor.a(widgetItemView, false);
+                    viewEditor.a(viewEditor.a(historyViewBean.getAddedData(), false), false);
+                } else if (actionType == HistoryViewBean.ACTION_TYPE_UPDATE) {
+                    ViewBean prevUpdateData = historyViewBean.getPrevUpdateData();
+                    ViewBean currentUpdateData = historyViewBean.getCurrentUpdateData();
+                    if (!prevUpdateData.id.equals(currentUpdateData.id)) {
+                        currentUpdateData.preId = prevUpdateData.id;
                     }
+
+                    if (currentUpdateData.id.equals("_fab")) {
+                        jC.a(sc_id).h(projectFileBean.getXmlName()).copy(currentUpdateData);
+                    } else {
+                        jC.a(sc_id).c(projectFileBean.getXmlName(), prevUpdateData.id).copy(currentUpdateData);
+                    }
+
+                    viewEditor.a(viewEditor.e(currentUpdateData), false);
+                } else if (actionType == HistoryViewBean.ACTION_TYPE_REMOVE) {
+                    for (ViewBean viewBean : historyViewBean.getRemovedData()) {
+                        jC.a(sc_id).a(projectFileBean, viewBean);
+                    }
+                    viewEditor.b(historyViewBean.getRemovedData(), false);
+                    viewEditor.i();
+                } else if (actionType == HistoryViewBean.ACTION_TYPE_MOVE) {
+                    ViewBean movedData = historyViewBean.getMovedData();
+                    ViewBean viewBean = jC.a(sc_id).c(projectFileBean.getXmlName(), movedData.id);
+                    viewBean.copy(movedData);
+                    viewEditor.a(viewEditor.b(viewBean, false), false);
                 }
-                invalidateOptionsMenu();
             }
+            invalidateOptionsMenu();
         }
     }
 
@@ -403,53 +352,45 @@ public class ViewEditorFragment extends qA {
         viewEditor.j();
     }
 
-    private void m() {
+    private void onUndo() {
         if (!q) {
             HistoryViewBean historyViewBean = cC.c(sc_id).i(projectFileBean.getXmlName());
-            if (historyViewBean == null) {
-                invalidateOptionsMenu();
-            } else {
+            if (historyViewBean != null) {
                 int actionType = historyViewBean.getActionType();
                 if (actionType == HistoryViewBean.ACTION_TYPE_ADD) {
-                    for (ViewBean viewBean : historyViewBean.getAddedData()) {
-                        jC.a(sc_id).a(projectFileBean, viewBean);
+                    for (ViewBean view : historyViewBean.getAddedData()) {
+                        jC.a(sc_id).a(projectFileBean, view);
                     }
                     viewEditor.b(historyViewBean.getAddedData(), false);
                     viewEditor.i();
-                } else {
-                    sy widgetItemView;
-                    if (actionType == HistoryViewBean.ACTION_TYPE_UPDATE) {
-                        ViewBean prevUpdateData = historyViewBean.getPrevUpdateData();
-                        ViewBean currentUpdateData = historyViewBean.getCurrentUpdateData();
-                        if (!prevUpdateData.id.equals(currentUpdateData.id)) {
-                            prevUpdateData.preId = currentUpdateData.id;
-                        }
-                        if (currentUpdateData.id.equals("_fab")) {
-                            jC.a(sc_id).h(projectFileBean.getXmlName()).copy(prevUpdateData);
-                        } else {
-                            jC.a(sc_id).c(projectFileBean.getXmlName(), currentUpdateData.id).copy(prevUpdateData);
-                        }
-                        widgetItemView = viewEditor.e(prevUpdateData);
-                        viewEditor.a(widgetItemView, false);
-                    } else if (actionType == HistoryViewBean.ACTION_TYPE_REMOVE) {
-                        for (ViewBean var7 : historyViewBean.getRemovedData()) {
-                            jC.a(sc_id).a(projectFileBean.getXmlName(), var7);
-                        }
-                        widgetItemView = viewEditor.a(historyViewBean.getRemovedData(), false);
-                        viewEditor.a(widgetItemView, false);
-                    } else if (actionType == HistoryViewBean.ACTION_TYPE_MOVE) {
-                        ViewBean movedData = historyViewBean.getMovedData();
-                        ViewBean viewBean = jC.a(sc_id).c(projectFileBean.getXmlName(), movedData.id);
-                        viewBean.preIndex = movedData.index;
-                        viewBean.index = movedData.preIndex;
-                        viewBean.parent = movedData.preParent;
-                        viewBean.preParent = movedData.parent;
-                        widgetItemView = viewEditor.b(viewBean, false);
-                        viewEditor.a(widgetItemView, false);
+                } else if (actionType == HistoryViewBean.ACTION_TYPE_UPDATE) {
+                    ViewBean prevUpdateData = historyViewBean.getPrevUpdateData();
+                    ViewBean currentUpdateData = historyViewBean.getCurrentUpdateData();
+                    if (!prevUpdateData.id.equals(currentUpdateData.id)) {
+                        prevUpdateData.preId = currentUpdateData.id;
                     }
+                    if (currentUpdateData.id.equals("_fab")) {
+                        jC.a(sc_id).h(projectFileBean.getXmlName()).copy(prevUpdateData);
+                    } else {
+                        jC.a(sc_id).c(projectFileBean.getXmlName(), currentUpdateData.id).copy(prevUpdateData);
+                    }
+                    viewEditor.a(viewEditor.e(prevUpdateData), false);
+                } else if (actionType == HistoryViewBean.ACTION_TYPE_REMOVE) {
+                    for (ViewBean view : historyViewBean.getRemovedData()) {
+                        jC.a(sc_id).a(projectFileBean.getXmlName(), view);
+                    }
+                    viewEditor.a(viewEditor.a(historyViewBean.getRemovedData(), false), false);
+                } else if (actionType == HistoryViewBean.ACTION_TYPE_MOVE) {
+                    ViewBean movedData = historyViewBean.getMovedData();
+                    ViewBean viewBean = jC.a(sc_id).c(projectFileBean.getXmlName(), movedData.id);
+                    viewBean.preIndex = movedData.index;
+                    viewBean.index = movedData.preIndex;
+                    viewBean.parent = movedData.preParent;
+                    viewBean.preParent = movedData.parent;
+                    viewEditor.a(viewEditor.b(viewBean, false), false);
                 }
-                invalidateOptionsMenu();
             }
+            invalidateOptionsMenu();
         }
     }
 
@@ -461,7 +402,7 @@ public class ViewEditorFragment extends qA {
         } else {
             viewBean = null;
         }
-        viewProperty.a(viewBeanArrayList, viewBean);
+        viewProperty.addActivityViews(viewBeanArrayList, viewBean);
     }
 
     @Override
@@ -494,7 +435,7 @@ public class ViewEditorFragment extends qA {
     public void onConfigurationChanged(@NonNull Configuration newConfiguration) {
         super.onConfigurationChanged(newConfiguration);
         viewEditor.setScreenType(newConfiguration.orientation);
-        viewEditor.P = true;
+        viewEditor.isLayoutChanged = true;
     }
 
     @Override
@@ -534,7 +475,7 @@ public class ViewEditorFragment extends qA {
         if (bundle != null) {
             sc_id = bundle.getString("sc_id");
         } else {
-            sc_id = getActivity().getIntent().getStringExtra("sc_id");
+            sc_id = requireActivity().getIntent().getStringExtra("sc_id");
         }
 
         return viewGroup;
@@ -544,9 +485,9 @@ public class ViewEditorFragment extends qA {
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemId = item.getItemId();
         if (itemId == R.id.menu_view_redo) {
-            h();
+            onRedo();
         } else if (itemId == R.id.menu_view_undo) {
-            m();
+            onUndo();
         }
         return true;
     }

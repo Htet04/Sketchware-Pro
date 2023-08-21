@@ -1,5 +1,6 @@
 package a.a.a;
 
+import android.annotation.SuppressLint;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,6 +31,7 @@ import dev.aldi.sayuti.editor.injection.AppCompatInjection;
 import mod.agus.jcoderz.beans.ViewBeans;
 import mod.jbk.util.LogUtil;
 
+@SuppressLint("RtlHardcoded")
 public class Ox {
 
     private final jq buildConfig;
@@ -44,14 +46,6 @@ public class Ox {
         buildConfig = jq;
         projectFile = projectFileBean;
         aci = new AppCompatInjection(jq, projectFileBean);
-    }
-
-    private static String x(String str) {
-        if (!str.contains(".")) {
-            return str;
-        }
-        String[] split = str.split("\\.");
-        return split[split.length - 1];
     }
 
     /**
@@ -187,6 +181,10 @@ public class Ox {
                         if (!toNotAdd.contains("app:backgroundTint")) {
                             nx.addAttribute("app", "backgroundTint", String.format("#%06X", color));
                         }
+                    } else if (nx.c().equals("CardView")) {
+                        if (!toNotAdd.contains("app:cardBackgroundColor")) {
+                            nx.addAttribute("app", "cardBackgroundColor", String.format("#%06X", color));
+                        }
                     } else if (nx.c().equals("CollapsingToolbarLayout")) {
                         if (!toNotAdd.contains("app:contentScrim")) {
                             nx.addAttribute("app", "contentScrim", String.format("#%06X", color));
@@ -298,13 +296,16 @@ public class Ox {
             }
 
             writeLayoutMargin(widgetTag, viewBean);
-            writeViewPadding(widgetTag, viewBean);
+            if (widgetTag.c().equals("CardView")) {
+                writeCardViewPadding(widgetTag, viewBean);
+            } else {
+                writeViewPadding(widgetTag, viewBean);
+            }
             writeBackgroundResource(widgetTag, viewBean);
             if (viewBean.getClassInfo().a("ViewGroup")) {
                 writeViewGravity(widgetTag, viewBean);
             }
         }
-        buildConfig.x.handleWidget(x(viewBean.convert));
         if (viewBean.getClassInfo().a("LinearLayout") &&
                 !widgetTag.c().matches("(BottomAppBar|NavigationView|Coordinator|Floating|Collaps|include)\\w*")) {
             if (!toNotAdd.contains("android:orientation")) {
@@ -571,6 +572,42 @@ public class Ox {
         }
         if (marginBottom > 0 && !toNotAdd.contains("android:layout_marginBottom")) {
             nx.addAttribute("android", "layout_marginBottom", marginBottom + "dp");
+        }
+    }
+
+    /**
+     * @see View#getPaddingLeft()
+     * @see View#getPaddingTop()
+     * @see View#getPaddingRight()
+     * @see View#getPaddingBottom()
+     */
+    private void writeCardViewPadding(XmlBuilder nx, ViewBean viewBean) {
+        Set<String> toNotAdd = readAttributesToReplace(viewBean);
+        LayoutBean layoutBean = viewBean.layout;
+        int paddingLeft = layoutBean.paddingLeft;
+        int paddingTop = layoutBean.paddingTop;
+        int paddingRight = layoutBean.paddingRight;
+        int paddingBottom = layoutBean.paddingBottom;
+
+        if (paddingLeft == paddingRight && paddingTop == paddingBottom
+                && paddingLeft == paddingTop && paddingLeft > 0) {
+            if (!toNotAdd.contains("app:contentPadding")) {
+                nx.addAttribute("app", "contentPadding", paddingLeft + "dp");
+            }
+            return;
+        }
+
+        if (paddingLeft > 0 && !toNotAdd.contains("app:contentPaddingLeft")) {
+            nx.addAttribute("app", "contentPaddingLeft", paddingLeft + "dp");
+        }
+        if (paddingTop > 0 && !toNotAdd.contains("app:contentPaddingTop")) {
+            nx.addAttribute("app", "contentPaddingTop", paddingTop + "dp");
+        }
+        if (paddingRight > 0 && !toNotAdd.contains("app:contentPaddingRight")) {
+            nx.addAttribute("app", "contentPaddingRight", paddingRight + "dp");
+        }
+        if (paddingBottom > 0 && !toNotAdd.contains("app:contentPaddingBottom")) {
+            nx.addAttribute("app", "contentPaddingBottom", paddingBottom + "dp");
         }
     }
 
