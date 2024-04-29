@@ -6,6 +6,7 @@ import android.content.DialogInterface.OnCancelListener;
 import android.os.AsyncTask.Status;
 import android.os.Bundle;
 
+import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
@@ -16,9 +17,9 @@ import java.util.ArrayList;
 
 import a.a.a.MA;
 import a.a.a.ZA;
-import a.a.a.Zo;
 import a.a.a._A;
 import a.a.a.lC;
+import a.a.a.xB;
 
 public class BaseAppCompatActivity extends AppCompatActivity {
 
@@ -27,7 +28,6 @@ public class BaseAppCompatActivity extends AppCompatActivity {
     public Tracker d;
     @Deprecated
     public Context e;
-    public Zo j;
     protected _A progressDialog;
     private ZA lottieDialog;
     private ArrayList<MA> taskList;
@@ -99,13 +99,16 @@ public class BaseAppCompatActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         e = getApplicationContext();
-        j = new Zo(getApplicationContext());
         d = new Tracker();
         taskList = new ArrayList<>();
         lottieDialog = new ZA(this);
         lC.a(getApplicationContext(), false);
         progressDialog = new _A(this);
         mAnalytics = FirebaseAnalytics.getInstance(this);
+    }
+
+    public final String getTranslatedString(@StringRes int resId) {
+        return xB.b().a(getApplicationContext(), resId);
     }
 
     @Override
