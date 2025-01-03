@@ -10,9 +10,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import mod.SketchwareUtil;
-import mod.agus.jcoderz.lib.FilePathUtil;
-import mod.agus.jcoderz.lib.FileUtil;
+import pro.sketchware.utility.SketchwareUtil;
+import pro.sketchware.utility.FilePathUtil;
+import pro.sketchware.utility.FileUtil;
 import mod.hey.studios.util.Helper;
 import mod.jbk.util.LogUtil;
 
@@ -146,7 +146,7 @@ public class ManageLocalLibrary {
             if (jarPath instanceof String) {
                 jars.add(new File((String) jarPath));
             } else {
-                SketchwareUtil.toastError("Invalid JAR path of enabled Local library #" + i, Toast.LENGTH_LONG);
+                SketchwareUtil.toastError("Invalid JAR path of enabled Local library #" + i + "->" + localLibrary.get("name"), Toast.LENGTH_LONG);
             }
         }
 
@@ -164,7 +164,7 @@ public class ManageLocalLibrary {
                 classpath.append(":");
                 classpath.append((String) jarPath);
             } else {
-                SketchwareUtil.toastError("Invalid JAR path of enabled Local library #" + i, Toast.LENGTH_LONG);
+                SketchwareUtil.toastError("Invalid JAR path of enabled Local library #" + i + "->" + localLibrary.get("name"), Toast.LENGTH_LONG);
             }
         }
 

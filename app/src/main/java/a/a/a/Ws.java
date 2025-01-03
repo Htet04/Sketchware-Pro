@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.sketchware.remod.R;
+import pro.sketchware.R;
 
 @SuppressLint("ViewConstructor")
 public class Ws extends RelativeLayout {
@@ -59,7 +59,7 @@ public class Ws extends RelativeLayout {
             params.width = ViewGroup.LayoutParams.MATCH_PARENT;
             background.setLayoutParams(params);
         } else {
-            tv_category.setTextColor(0xff505050);
+            tv_category.setTextColor(Color.parseColor("#b3b3b3"));
             ViewGroup.LayoutParams params = background.getLayoutParams();
             params.width = unselectedBackgroundWidth;
             background.setLayoutParams(params);

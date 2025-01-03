@@ -4,8 +4,10 @@ import android.text.TextUtils;
 
 import com.besome.sketch.beans.ComponentBean;
 import com.besome.sketch.beans.ViewBean;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -13,9 +15,12 @@ import mod.agus.jcoderz.editor.event.ManageEvent;
 import mod.agus.jcoderz.handle.component.ConstVarComponent;
 import mod.hey.studios.build.BuildSettings;
 import mod.hey.studios.moreblock.ReturnMoreblockManager;
+import mod.hey.studios.util.Helper;
 import mod.hilal.saif.components.ComponentsHandler;
 import mod.jbk.build.BuiltInLibraries;
 import mod.jbk.editor.manage.library.ExcludeBuiltInLibrariesActivity;
+import mod.pranav.viewbinding.ViewBindingBuilder;
+import pro.sketchware.utility.FileUtil;
 
 public class Lx {
 
@@ -29,121 +34,160 @@ public class Lx {
     /**
      * @return Content of a <code>build.gradle</code> file for the module ':app', with indentation
      */
-    public static String getBuildGradleString(int compileSdkVersion, int minSdkVersion, int targetSdkVersion, jq metadata) {
-        String content = "plugins {\r\n" +
+    public static String getBuildGradleString(int compileSdkVersion, int minSdkVersion, String targetSdkVersion, jq metadata) {
+        StringBuilder content = new StringBuilder("plugins {\r\n" +
                 "id 'com.android.application'\r\n" +
                 "}\r\n" +
                 "\r\n" +
                 "android {\r\n" +
-                "compileSdkVersion " + compileSdkVersion + "\r\n" +
-                "\r\n";
+                "compileSdk " + compileSdkVersion + "\r\n" +
+                "\r\n");
         if (new BuildSettings(metadata.sc_id)
                 .getValue(BuildSettings.SETTING_NO_HTTP_LEGACY, BuildSettings.SETTING_GENERIC_VALUE_FALSE)
                 .equals(BuildSettings.SETTING_GENERIC_VALUE_FALSE)) {
-            content += "useLibrary 'org.apache.http.legacy'\r\n" +
-                    "\r\n";
+            content.append("""
+                    useLibrary 'org.apache.http.legacy'\r
+                    \r
+                    """);
         }
-        content += "defaultConfig {\r\n" +
-                "applicationId \"" + metadata.packageName + "\"\r\n" +
-                "minSdkVersion " + minSdkVersion + "\r\n" +
-                "targetSdkVersion " + targetSdkVersion + "\r\n" +
-                "versionCode " + metadata.versionCode + "\r\n" +
-                "versionName \"" + metadata.versionName + "\"\r\n" +
-                "}\r\n" +
-                "\r\n" +
-                "buildTypes {\r\n" +
-                "release {\r\n" +
-                "minifyEnabled false\r\n" +
-                "proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'\r\n" +
-                "}\r\n" +
-                "}\r\n" +
-                "}\r\n" +
-                "\r\n" +
-                "dependencies {\r\n" +
-                "implementation fileTree(dir: 'libs', include: ['*.jar'])\r\n";
+        content.append("defaultConfig {\r\n" + "applicationId \"")
+                .append(metadata.packageName)
+                .append("\"\r\n")
+                .append("namespace \"")
+                .append(metadata.packageName)
+                .append("\"\r\n")
+                .append("minSdkVersion ")
+                .append(minSdkVersion)
+                .append("\r\n")
+                .append("targetSdkVersion ")
+                .append(targetSdkVersion)
+                .append("\r\n")
+                .append("versionCode ")
+                .append(metadata.versionCode)
+                .append("\r\n")
+                .append("versionName \"")
+                .append(metadata.versionName)
+                .append("\"\r\n")
+                .append("}\r\n")
+                .append("\r\n")
+                .append("buildTypes {\r\n")
+                .append("release {\r\n")
+                .append("minifyEnabled false\r\n")
+                .append("proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'\r\n")
+                .append("}\r\n")
+                .append("}\r\n")
+                .append("}\r\n")
+                .append("\r\n")
+                .append("dependencies {\r\n")
+                .append("implementation fileTree(dir: 'libs', include: ['*.jar'])\r\n");
 
         List<BuiltInLibraries.BuiltInLibrary> excludedLibraries = ExcludeBuiltInLibrariesActivity.getExcludedLibraries(metadata.sc_id);
         if (isLibraryNotExcluded(BuiltInLibraries.ANDROIDX_APPCOMPAT, excludedLibraries) && metadata.g) {
-            content += "implementation 'androidx.appcompat:appcompat:1.4.0'\r\n" +
-                    "implementation 'com.google.android.material:material:1.6.1'\r\n";
+            content.append("""
+                    implementation 'androidx.appcompat:appcompat:1.7.0'\r
+                    implementation 'com.google.android.material:material:1.12.0'\r
+                    """);
+        }
+
+        if (metadata.isFirebaseEnabled) {
+            content.append("implementation platform('com.google.firebase:firebase-bom:33.4.0')\r\n");
         }
 
         if (isLibraryNotExcluded(BuiltInLibraries.FIREBASE_AUTH, excludedLibraries) && metadata.isFirebaseAuthUsed) {
-            content += "implementation 'com.google.firebase:firebase-auth:19.0.0'\r\n";
+            content.append("implementation 'com.google.firebase:firebase-auth'\r\n");
         }
 
         if (isLibraryNotExcluded(BuiltInLibraries.FIREBASE_DATABASE, excludedLibraries) && metadata.isFirebaseDatabaseUsed) {
-            content += "implementation 'com.google.firebase:firebase-database:19.0.0'\r\n";
+            content.append("implementation 'com.google.firebase:firebase-database'\r\n");
         }
 
         if (isLibraryNotExcluded(BuiltInLibraries.FIREBASE_STORAGE, excludedLibraries) && metadata.isFirebaseStorageUsed) {
-            content += "implementation 'com.google.firebase:firebase-storage:19.0.0'\r\n";
-        }
-
-        if (isLibraryNotExcluded(BuiltInLibraries.PLAY_SERVICES_ADS, excludedLibraries) && metadata.isAdMobEnabled) {
-            content += "implementation 'com.google.android.gms:play-services-ads:20.1.0'\r\n";
-        }
-
-        if (isLibraryNotExcluded(BuiltInLibraries.PLAY_SERVICES_MAPS, excludedLibraries) && metadata.isMapUsed) {
-            content += "implementation 'com.google.android.gms:play-services-maps:17.0.1'\r\n";
-        }
-
-        if (isLibraryNotExcluded(BuiltInLibraries.GLIDE, excludedLibraries) && metadata.isGlideUsed) {
-            content += "implementation 'com.github.bumptech.glide:glide:4.12.0'\r\n";
-        }
-
-        if (isLibraryNotExcluded(BuiltInLibraries.GSON, excludedLibraries) && metadata.isGsonUsed) {
-            content += "implementation 'com.google.code.gson:gson:2.8.7'\r\n";
-        }
-
-        if (isLibraryNotExcluded(BuiltInLibraries.OKHTTP, excludedLibraries) && metadata.isHttp3Used) {
-            content += "implementation 'com.squareup.okhttp3:okhttp:3.9.1'\r\n";
+            content.append("implementation 'com.google.firebase:firebase-storage'\r\n");
         }
 
         if (isLibraryNotExcluded(BuiltInLibraries.FIREBASE_DYNAMIC_LINKS, excludedLibraries) && metadata.isDynamicLinkUsed) {
-            content += "implementation 'com.google.firebase:firebase-dynamic-links:19.0.0'\r\n";
+            content.append("implementation 'com.google.firebase:firebase-dynamic-links'\r\n");
+        }
+
+        if (isLibraryNotExcluded(BuiltInLibraries.PLAY_SERVICES_ADS, excludedLibraries) && metadata.isAdMobEnabled) {
+            content.append("implementation 'com.google.android.gms:play-services-ads:23.4.0'\r\n");
+        }
+
+        if (isLibraryNotExcluded(BuiltInLibraries.PLAY_SERVICES_MAPS, excludedLibraries) && metadata.isMapUsed) {
+            content.append("implementation 'com.google.android.gms:play-services-maps:17.0.1'\r\n");
+        }
+
+        if (isLibraryNotExcluded(BuiltInLibraries.GLIDE, excludedLibraries) && metadata.isGlideUsed) {
+            content.append("implementation 'com.github.bumptech.glide:glide:4.16.0'\r\n");
+        }
+
+        if (isLibraryNotExcluded(BuiltInLibraries.GSON, excludedLibraries) && metadata.isGsonUsed) {
+            content.append("implementation 'com.google.code.gson:gson:2.11.0'\r\n");
+        }
+
+        if (isLibraryNotExcluded(BuiltInLibraries.OKHTTP, excludedLibraries) && metadata.isHttp3Used) {
+            content.append("implementation 'com.squareup.okhttp3:okhttp:4.12.0'\r\n");
         }
 
         ConstVarComponent extraMetadata = metadata.x;
         if (isLibraryNotExcluded(BuiltInLibraries.CIRCLE_IMAGEVIEW, excludedLibraries) && extraMetadata.isCircleImageViewUsed) {
-            content += "implementation 'de.hdodenhof:circleimageview:3.1.0'\r\n";
+            content.append("implementation 'de.hdodenhof:circleimageview:3.1.0'\r\n");
         }
 
         if (isLibraryNotExcluded(BuiltInLibraries.YOUTUBE_PLAYER, excludedLibraries) && extraMetadata.isYoutubePlayerUsed) {
-            content += "implementation 'com.pierfrancescosoffritti:androidyoutubeplayer:10.0.5'\r\n";
+            content.append("implementation 'com.pierfrancescosoffritti:androidyoutubeplayer:10.0.5'\r\n");
         }
 
         if (isLibraryNotExcluded(BuiltInLibraries.CODE_VIEW, excludedLibraries) && extraMetadata.isCodeViewUsed) {
-            content += "implementation 'br.tiagohm:codeview:0.4.0'\r\n";
+            content.append("implementation 'br.tiagohm:codeview:0.4.0'\r\n");
         }
 
         if (isLibraryNotExcluded(BuiltInLibraries.LOTTIE, excludedLibraries) && extraMetadata.isLottieUsed) {
-            content += "implementation 'com.airbnb:lottie:3.4.0'\r\n";
+            content.append("implementation 'com.airbnb.android:lottie:6.5.2'\r\n");
         }
 
         if (isLibraryNotExcluded(BuiltInLibraries.OTPVIEW, excludedLibraries) && extraMetadata.isOTPViewUsed) {
-            content += "implementation 'affan.ahmad:otp:0.1.0'\r\n";
+            content.append("implementation 'affan.ahmad:otp:0.1.0'\r\n");
         }
 
         if (isLibraryNotExcluded(BuiltInLibraries.ONESIGNAL, excludedLibraries) && extraMetadata.isOneSignalUsed) {
-            content += "implementation 'com.onesignal:OneSignal:3.14.0'\r\n";
+            content.append("implementation 'com.onesignal:OneSignal:3.14.0'\r\n");
         }
 
         if (isLibraryNotExcluded(BuiltInLibraries.PATTERN_LOCK_VIEW, excludedLibraries) && extraMetadata.isPatternLockViewUsed) {
-            content += "implementation 'com.andrognito:patternlockview:1.0.0'\r\n";
+            content.append("implementation 'com.andrognito:patternlockview:1.0.0'\r\n");
         }
 
         if (isLibraryNotExcluded(BuiltInLibraries.FACEBOOK_ADS_AUDIENCE_NETWORK_SDK, excludedLibraries) && extraMetadata.isFBAdsUsed) {
-            content += "implementation 'com.facebook.android:audience-network-sdk:5.9.0'";
+            content.append("implementation 'com.facebook.android:audience-network-sdk:6.18.0'");
         }
 
         if (isLibraryNotExcluded(BuiltInLibraries.PLAY_SERVICES_AUTH, excludedLibraries) && extraMetadata.isFBGoogleUsed) {
-            content += "implementation 'com.google.android.gms:play-services-auth:19.0.0'";
+            content.append("implementation 'com.google.android.gms:play-services-auth:19.0.0'");
         }
 
         if (isLibraryNotExcluded(BuiltInLibraries.FIREBASE_MESSAGING, excludedLibraries) && extraMetadata.isFCMUsed) {
-            content += "implementation 'com.google.firebase:firebase-messaging:19.0.0'";
+            content.append("implementation 'com.google.firebase:firebase-messaging'");
         }
+
+        String sc_id = metadata.sc_id;
+        String local_lib_file = FileUtil.getExternalStorageDir() + "/.sketchware/data/" + sc_id + "/local_library";
+        String fileContent = FileUtil.readFile(local_lib_file);
+
+        if (!fileContent.isEmpty()) {
+            Gson gson = new Gson();
+            ArrayList<HashMap<String, Object>> localLibraries = gson.fromJson(fileContent, Helper.TYPE_MAP_LIST);
+            if (localLibraries != null) {
+                for (HashMap<String, Object> library : localLibraries) {
+                    String dependency = (String) library.get("dependency");
+                    if (dependency != null && !dependency.isEmpty()) {
+                        dependency = "implementation '" + dependency + "'";
+                        content.append(dependency).append("\r\n");
+                    }
+                }
+            }
+        }
+
         return j(content + "}\r\n", false);
     }
 
@@ -156,39 +200,27 @@ public class Lx {
      * @return Code to be added to <code>onActivityResult</code> for a component
      */
     public static String getOnActivityResultCode(int componentId, String componentName, String onSuccessLogic, String onCancelledLogic) {
-        String componentLogic;
-        switch (componentId) {
-            case ComponentBean.COMPONENT_TYPE_FILE_PICKER:
-                componentLogic = "ArrayList<String> _filePath = new ArrayList<>();\r\n" +
-                        "if (_data != null) {\r\n" +
-                        "if (_data.getClipData() != null) {\r\n" +
-                        "for (int _index = 0; _index < _data.getClipData().getItemCount(); _index++) {\r\n" +
-                        "ClipData.Item _item = _data.getClipData().getItemAt(_index);\r\n" +
-                        "_filePath.add(FileUtil.convertUriToFilePath(getApplicationContext(), _item.getUri()));\r\n" +
-                        "}\r\n" +
-                        "}\r\n" +
-                        "else {\r\n" +
-                        "_filePath.add(FileUtil.convertUriToFilePath(getApplicationContext(), _data.getData()));\r\n" +
-                        "}\r\n" +
-                        "}";
-                break;
-
-            case ComponentBean.COMPONENT_TYPE_CAMERA:
-                componentLogic = " String _filePath = _file_" + componentName + ".getAbsolutePath();\r\n";
-                break;
-
-            case ComponentBean.COMPONENT_TYPE_FIREBASE_AUTH_GOOGLE_LOGIN:
-                componentLogic = "Task<GoogleSignInAccount> _task = GoogleSignIn.getSignedInAccountFromIntent(_data);\r\n";
-                break;
-
-            case 35:
-                componentLogic = "String _filePath = file_" + componentName + ".getAbsolutePath();\r\n";
-                break;
-
-            default:
-                componentLogic = "";
-                break;
-        }
+        String componentLogic = switch (componentId) {
+            case ComponentBean.COMPONENT_TYPE_FILE_PICKER ->
+                    "ArrayList<String> _filePath = new ArrayList<>();\r\n" +
+                            "if (_data != null) {\r\n" +
+                            "if (_data.getClipData() != null) {\r\n" +
+                            "for (int _index = 0; _index < _data.getClipData().getItemCount(); _index++) {\r\n" +
+                            "ClipData.Item _item = _data.getClipData().getItemAt(_index);\r\n" +
+                            "_filePath.add(FileUtil.convertUriToFilePath(getApplicationContext(), _item.getUri()));\r\n" +
+                            "}\r\n" +
+                            "}\r\n" +
+                            "else {\r\n" +
+                            "_filePath.add(FileUtil.convertUriToFilePath(getApplicationContext(), _data.getData()));\r\n" +
+                            "}\r\n" +
+                            "}";
+            case ComponentBean.COMPONENT_TYPE_CAMERA ->
+                    " String _filePath = _file_" + componentName + ".getAbsolutePath();\r\n";
+            case ComponentBean.COMPONENT_TYPE_FIREBASE_AUTH_GOOGLE_LOGIN ->
+                    "Task<GoogleSignInAccount> _task = GoogleSignIn.getSignedInAccountFromIntent(_data);\r\n";
+            case 35 -> "String _filePath = file_" + componentName + ".getAbsolutePath();\r\n";
+            default -> "";
+        };
 
         return "case REQ_CD_" + componentName.toUpperCase() + ":\r\n" +
                 "if (_resultCode == Activity.RESULT_OK) {\r\n" +
@@ -233,426 +265,319 @@ public class Lx {
     }
 
     public static String getEventCode(String targetId, String eventName, String eventLogic) {
-        switch (eventName) {
-            case "onClick":
-                return "@Override\r\n" +
-                        "public void onClick(View _view) {\r\n"
-                        + eventLogic + "\r\n" +
-                        "}";
-
-            case "onBackPressed":
-                return "@Override\r\n" +
-                        "public void onBackPressed() {\r\n"
-                        + eventLogic + "\r\n" +
-                        "}";
-
-            case "onPostCreate":
-                return "@Override\r\n" +
-                        "protected void onPostCreate(Bundle _savedInstanceState) {\r\n" +
-                        "super.onPostCreate(_savedInstanceState);\r\n"
-                        + eventLogic + "\r\n" +
-                        "}";
-
-            case "onStart":
-                return "@Override\r\n" +
-                        "public void onStart() {\r\n" +
-                        "super.onStart();\r\n"
-                        + eventLogic + "\r\n" +
-                        "}";
-
-            case "onStop":
-                return "@Override\r\n" +
-                        "public void onStop() {\r\n" +
-                        "super.onStop();\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onDestroy":
-                return "@Override\r\n" +
-                        "public void onDestroy() {\r\n" +
-                        "super.onDestroy();\r\n"
-                        + eventLogic + "\r\n" +
-                        "}";
-
-            case "onResume":
-                return "@Override\r\n" +
-                        "public void onResume() {\r\n" +
-                        "super.onResume();\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onPause":
-                return "@Override\r\n" +
-                        "public void onPause() {\r\n" +
-                        "super.onPause();\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onCheckedChange":
-                return "@Override\r\n" +
-                        "public void onCheckedChanged(CompoundButton _param1, boolean _param2) {\r\n" +
-                        "final boolean _isChecked = _param2;\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onItemSelected":
-                return "@Override\r\n" +
-                        "public void onItemSelected(AdapterView<?> _param1, View _param2, int _param3, long _param4) {\r\n" +
-                        "final int _position = _param3;\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onNothingSelected":
-                return "@Override\r\n" +
-                        "public void onNothingSelected(AdapterView<?> _param1) {\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onItemClicked":
-                return "@Override\r\n" +
-                        "public void onItemClick(AdapterView<?> _param1, View _param2, int _param3, long _param4) {\r\n" +
-                        "final int _position = _param3;\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onItemLongClicked":
-                return "@Override\r\n" +
-                        "public boolean onItemLongClick(AdapterView<?> _param1, View _param2, int _param3, long _param4) {\r\n" +
-                        "final int _position = _param3;\r\n" +
-                        eventLogic + "\r\n" +
-                        "return true;\r\n" +
-                        "}";
-
-            case "beforeTextChanged":
-                return "@Override\r\n" +
-                        "public void beforeTextChanged(CharSequence _param1, int _param2, int _param3, int _param4) {\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "afterTextChanged":
-                return "@Override\r\n" +
-                        "public void afterTextChanged(Editable _param1) {\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onTextChanged":
-                return "@Override\r\n" +
-                        "public void onTextChanged(CharSequence _param1, int _param2, int _param3, int _param4) {\r\n" +
-                        "final String _charSeq = _param1.toString();\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onProgressChanged":
-                return "@Override\r\n" +
-                        "public void onProgressChanged(SeekBar _param1, int _param2, boolean _param3) {\r\n" +
-                        "final int _progressValue = _param2;\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onStartTrackingTouch":
-                return "@Override\r\n" +
-                        "public void onStartTrackingTouch(SeekBar _param1) {\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onStopTrackingTouch":
+        return switch (eventName) {
+            case "onClick" -> "@Override\r\n" +
+                    "public void onClick(View _view) {\r\n"
+                    + eventLogic + "\r\n" +
+                    "}";
+            case "onBackPressed" -> "@Override\r\n" +
+                    "public void onBackPressed() {\r\n"
+                    + eventLogic + "\r\n" +
+                    "}";
+            case "onPostCreate" -> "@Override\r\n" +
+                    "protected void onPostCreate(Bundle _savedInstanceState) {\r\n" +
+                    "super.onPostCreate(_savedInstanceState);\r\n"
+                    + eventLogic + "\r\n" +
+                    "}";
+            case "onStart" -> "@Override\r\n" +
+                    "public void onStart() {\r\n" +
+                    "super.onStart();\r\n"
+                    + eventLogic + "\r\n" +
+                    "}";
+            case "onStop" -> "@Override\r\n" +
+                    "public void onStop() {\r\n" +
+                    "super.onStop();\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onDestroy" -> "@Override\r\n" +
+                    "public void onDestroy() {\r\n" +
+                    "super.onDestroy();\r\n"
+                    + eventLogic + "\r\n" +
+                    "}";
+            case "onResume" -> "@Override\r\n" +
+                    "public void onResume() {\r\n" +
+                    "super.onResume();\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onPause" -> "@Override\r\n" +
+                    "public void onPause() {\r\n" +
+                    "super.onPause();\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onCheckedChange" -> "@Override\r\n" +
+                    "public void onCheckedChanged(CompoundButton _param1, boolean _param2) {\r\n" +
+                    "final boolean _isChecked = _param2;\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onItemSelected" -> "@Override\r\n" +
+                    "public void onItemSelected(AdapterView<?> _param1, View _param2, int _param3, long _param4) {\r\n" +
+                    "final int _position = _param3;\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onNothingSelected" -> "@Override\r\n" +
+                    "public void onNothingSelected(AdapterView<?> _param1) {\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onItemClicked" -> "@Override\r\n" +
+                    "public void onItemClick(AdapterView<?> _param1, View _param2, int _param3, long _param4) {\r\n" +
+                    "final int _position = _param3;\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onItemLongClicked" -> "@Override\r\n" +
+                    "public boolean onItemLongClick(AdapterView<?> _param1, View _param2, int _param3, long _param4) {\r\n" +
+                    "final int _position = _param3;\r\n" +
+                    eventLogic + "\r\n" +
+                    "return true;\r\n" +
+                    "}";
+            case "beforeTextChanged" -> "@Override\r\n" +
+                    "public void beforeTextChanged(CharSequence _param1, int _param2, int _param3, int _param4) {\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "afterTextChanged" -> "@Override\r\n" +
+                    "public void afterTextChanged(Editable _param1) {\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onTextChanged" -> "@Override\r\n" +
+                    "public void onTextChanged(CharSequence _param1, int _param2, int _param3, int _param4) {\r\n" +
+                    "final String _charSeq = _param1.toString();\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onProgressChanged" -> "@Override\r\n" +
+                    "public void onProgressChanged(SeekBar _param1, int _param2, boolean _param3) {\r\n" +
+                    "final int _progressValue = _param2;\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onStartTrackingTouch" -> "@Override\r\n" +
+                    "public void onStartTrackingTouch(SeekBar _param1) {\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onStopTrackingTouch" ->
                 // Why's the parameter named <code>_param2</code> even if it's the first parameter
-                return "@Override\r\n" +
-                        "public void onStopTrackingTouch(SeekBar _param2) {\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onDateChange":
-                return "@Override\r\n" +
-                        "public void onSelectedDayChange(CalendarView _param1, int _param2, int _param3, int _param4) {\r\n" +
-                        "final int _year = _param2;\r\n" +
-                        "final int _month = _param3;\r\n" +
-                        "final int _day = _param4;\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onPageStarted":
-                return "@Override\r\n" +
-                        "public void onPageStarted(WebView _param1, String _param2, Bitmap _param3) {\r\n" +
-                        "final String _url = _param2;\r\n" +
-                        eventLogic + "\r\n" +
-                        "super.onPageStarted(_param1, _param2, _param3);\r\n" +
-                        "}";
-
-            case "onPageFinished":
-                return "@Override\r\n" +
-                        "public void onPageFinished(WebView _param1, String _param2) {\r\n" +
-                        "final String _url = _param2;\r\n" +
-                        eventLogic + "\r\n" +
-                        "super.onPageFinished(_param1, _param2);\r\n" +
-                        "}";
-
-            case "onAnimationStart":
-                return "@Override\r\n" +
-                        "public void onAnimationStart(Animator _param1) {\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onAnimationCancel":
-                return "@Override\r\n" +
-                        "public void onAnimationCancel(Animator _param1) {\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onAnimationEnd":
-                return "@Override\r\n" +
-                        "public void onAnimationEnd(Animator _param1) {\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onAnimationRepeat":
-                return "@Override\r\n" +
-                        "public void onAnimationRepeat(Animator _param1) {\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onChildAdded":
-                return "@Override\r\n" +
-                        "public void onChildAdded(DataSnapshot _param1, String _param2) {\r\n" +
-                        "GenericTypeIndicator<HashMap<String, Object>> _ind = new GenericTypeIndicator<HashMap<String, Object>>() {};\r\n" +
-                        "final String _childKey = _param1.getKey();\r\n" +
-                        "final HashMap<String, Object> _childValue = _param1.getValue(_ind);\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onChildChanged":
-                return "@Override\r\n" +
-                        "public void onChildChanged(DataSnapshot _param1, String _param2) {\r\n" +
-                        "GenericTypeIndicator<HashMap<String, Object>> _ind = new GenericTypeIndicator<HashMap<String, Object>>() {};\r\n" +
-                        "final String _childKey = _param1.getKey();\r\n" +
-                        "final HashMap<String, Object> _childValue = _param1.getValue(_ind);\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onChildRemoved":
-                return "@Override\r\n" +
-                        "public void onChildRemoved(DataSnapshot _param1) {\r\n" +
-                        "GenericTypeIndicator<HashMap<String, Object>> _ind = new GenericTypeIndicator<HashMap<String, Object>>() {};\r\n" +
-                        "final String _childKey = _param1.getKey();\r\n" +
-                        "final HashMap<String, Object> _childValue = _param1.getValue(_ind);\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onChildMoved":
-                return "@Override\r\n" +
-                        "public void onChildMoved(DataSnapshot _param1, String _param2) {\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onCancelled":
-                return "@Override\r\n" +
-                        "public void onCancelled(DatabaseError _param1) {\r\n" +
-                        "final int _errorCode = _param1.getCode();\r\n" +
-                        "final String _errorMessage = _param1.getMessage();\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onSensorChanged":
-                return "@Override\r\n" +
-                        "public void onSensorChanged(SensorEvent _param1) {\r\n" +
-                        "float[] _rotationMatrix = new float[16];\r\n" +
-                        "SensorManager.getRotationMatrixFromVector(_rotationMatrix, _param1.values);\r\n" +
-                        "float[] _remappedRotationMatrix = new float[16];\r\n" +
-                        "SensorManager.remapCoordinateSystem(_rotationMatrix, SensorManager.AXIS_X, SensorManager.AXIS_Z, _remappedRotationMatrix);\r\n" +
-                        "float[] _orientations = new float[3];\r\n" +
-                        "SensorManager.getOrientation(_remappedRotationMatrix, _orientations);\r\n" +
-                        "for (int _i = 0; _i < 3; _i++) {\r\n" +
-                        "_orientations[_i] = (float)(Math.toDegrees(_orientations[_i]));\r\n" +
-                        "}\r\n" +
-                        "final double _x = _orientations[0];\r\n" +
-                        "final double _y = _orientations[1];\r\n" +
-                        "final double _z = _orientations[2];\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onAccuracyChanged":
-                return "@Override\r\n" +
-                        "public void onAccuracyChanged(Sensor _param1, int _param2) {\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onCreateUserComplete":
-            case "onSignInUserComplete":
-                return "@Override\r\n" +
-                        "public void onComplete(Task<AuthResult> _param1) {\r\n" +
-                        "final boolean _success = _param1.isSuccessful();\r\n" +
-                        "final String _errorMessage = _param1.getException() != null ? _param1.getException().getMessage() : \"\";\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onResetPasswordEmailSent":
-                return "@Override\r\n" +
-                        "public void onComplete(Task<Void> _param1) {\r\n" +
-                        "final boolean _success = _param1.isSuccessful();\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onUploadProgress":
-                return "@Override\r\n" +
-                        "public void onProgress(UploadTask.TaskSnapshot _param1) {\r\n" +
-                        "double _progressValue = (100.0 * _param1.getBytesTransferred()) / _param1.getTotalByteCount();\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onDownloadProgress":
-                return "@Override\r\n" +
-                        "public void onProgress(FileDownloadTask.TaskSnapshot _param1) {\r\n" +
-                        "double _progressValue = (100.0 * _param1.getBytesTransferred()) / _param1.getTotalByteCount();\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onUploadSuccess":
-                return "@Override\r\n" +
-                        "public void onComplete(Task<Uri> _param1) {\r\n" +
-                        "final String _downloadUrl = _param1.getResult().toString();\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onDownloadSuccess":
-                return "@Override\r\n" +
-                        "public void onSuccess(FileDownloadTask.TaskSnapshot _param1) {\r\n" +
-                        "final long _totalByteCount = _param1.getTotalByteCount();\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onDeleteSuccess":
-                return "@Override\r\n" +
-                        "public void onSuccess(Object _param1) {\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onFailure":
-                return "@Override\r\n" +
-                        "public void onFailure(Exception _param1) {\r\n" +
-                        "final String _message = _param1.getMessage();\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onResponse":
-                return "@Override\r\n" +
-                        "public void onResponse(String _param1, String _param2, HashMap<String, Object> _param3) {\r\n" +
-                        "final String _tag = _param1;\r\n" +
-                        "final String _response = _param2;\r\n" +
-                        "final HashMap<String, Object> _responseHeaders = _param3;\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onErrorResponse":
-                return "@Override\r\n" +
-                        "public void onErrorResponse(String _param1, String _param2) {\r\n" +
-                        "final String _tag = _param1;\r\n" +
-                        "final String _message = _param2;\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onSpeechResult":
-                return "@Override\r\n" +
-                        "public void onResults(Bundle _param1) {\r\n" +
-                        "final ArrayList<String> _results = _param1.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);\r\n" +
-                        "final String _result = _results.get(0);\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onSpeechError":
-                return "@Override\r\n" +
-                        "public void onError(int _param1) {\r\n" +
-                        "final String _errorMessage;\r\n" +
-                        "switch (_param1) {\r\n" +
-                        "case SpeechRecognizer.ERROR_AUDIO:\r\n" +
-                        "_errorMessage = \"audio error\";\r\n" +
-                        "break;\r\n" +
-                        "\r\n" +
-                        "case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:\r\n" +
-                        "_errorMessage = \"speech timeout\";\r\n" +
-                        "break;\r\n" +
-                        "\r\n" +
-                        "case SpeechRecognizer.ERROR_NO_MATCH:\r\n" +
-                        "_errorMessage = \"speech no match\";\r\n" +
-                        "break;\r\n" +
-                        "\r\n" +
-                        "case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:\r\n" +
-                        "_errorMessage = \"recognizer busy\";\r\n" +
-                        "break;\r\n" +
-                        "\r\n" +
-                        "case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:\r\n" +
-                        "_errorMessage = \"recognizer insufficient permissions\";\r\n" +
-                        "break;\r\n" +
-                        "\r\n" +
-                        "default:\r\n" +
-                        "_errorMessage = \"recognizer other error\";\r\n" +
-                        "break;\r\n" +
-                        "}\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onConnected":
-                return "@Override\r\n" +
-                        "public void onConnected(String _param1, HashMap<String, Object> _param2) {\r\n" +
-                        "final String _tag = _param1;\r\n" +
-                        "final HashMap<String, Object> _deviceData = _param2;\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onDataReceived":
-                return "@Override\r\n" +
-                        "public void onDataReceived(String _param1, byte[] _param2, int _param3) {\r\n" +
-                        "final String _tag = _param1;\r\n" +
-                        "final String _data = new String(_param2, 0, _param3);\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onDataSent":
-                return "@Override\r\n" +
-                        "public void onDataSent(String _param1, byte[] _param2) {\r\n" +
-                        "final String _tag = _param1;\r\n" +
-                        "final String _data = new String(_param2);\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onConnectionError":
-                return "@Override\r\n" +
-                        "public void onConnectionError(String _param1, String _param2, String _param3) {\r\n" +
-                        "final String _tag = _param1;\r\n" +
-                        "final String _connectionState = _param2;\r\n" +
-                        "final String _errorMessage = _param3;\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onConnectionStopped":
-                return "@Override\r\n" +
-                        "public void onConnectionStopped(String _param1) {\r\n" +
-                        "final String _tag = _param1;\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            case "onMapReady":
-                return eventLogic;
-
-            case "onMarkerClicked":
-                return "@Override\r\n" +
-                        "public boolean onMarkerClick(Marker _param1) {\r\n" +
-                        "final String _id = _param1.getTag().toString();\r\n" +
-                        eventLogic + "\r\n" +
-                        "return false;\r\n" +
-                        "}";
-
-            case "onLocationChanged":
-                return "@Override\r\n" +
-                        "public void onLocationChanged(Location _param1) {\r\n" +
-                        "final double _lat = _param1.getLatitude();\r\n" +
-                        "final double _lng = _param1.getLongitude();\r\n" +
-                        "final double _acc = _param1.getAccuracy();\r\n" +
-                        eventLogic + "\r\n" +
-                        "}";
-
-            default:
-                return ManageEvent.f(targetId, eventName, eventLogic);
-        }
+                    "@Override\r\n" +
+                            "public void onStopTrackingTouch(SeekBar _param2) {\r\n" +
+                            eventLogic + "\r\n" +
+                            "}";
+            case "onDateChange" -> "@Override\r\n" +
+                    "public void onSelectedDayChange(CalendarView _param1, int _param2, int _param3, int _param4) {\r\n" +
+                    "final int _year = _param2;\r\n" +
+                    "final int _month = _param3;\r\n" +
+                    "final int _day = _param4;\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onPageStarted" -> "@Override\r\n" +
+                    "public void onPageStarted(WebView _param1, String _param2, Bitmap _param3) {\r\n" +
+                    "final String _url = _param2;\r\n" +
+                    eventLogic + "\r\n" +
+                    "super.onPageStarted(_param1, _param2, _param3);\r\n" +
+                    "}";
+            case "onPageFinished" -> "@Override\r\n" +
+                    "public void onPageFinished(WebView _param1, String _param2) {\r\n" +
+                    "final String _url = _param2;\r\n" +
+                    eventLogic + "\r\n" +
+                    "super.onPageFinished(_param1, _param2);\r\n" +
+                    "}";
+            case "onAnimationStart" -> "@Override\r\n" +
+                    "public void onAnimationStart(Animator _param1) {\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onAnimationCancel" -> "@Override\r\n" +
+                    "public void onAnimationCancel(Animator _param1) {\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onAnimationEnd" -> "@Override\r\n" +
+                    "public void onAnimationEnd(Animator _param1) {\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onAnimationRepeat" -> "@Override\r\n" +
+                    "public void onAnimationRepeat(Animator _param1) {\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onChildAdded" -> "@Override\r\n" +
+                    "public void onChildAdded(DataSnapshot _param1, String _param2) {\r\n" +
+                    "GenericTypeIndicator<HashMap<String, Object>> _ind = new GenericTypeIndicator<HashMap<String, Object>>() {};\r\n" +
+                    "final String _childKey = _param1.getKey();\r\n" +
+                    "final HashMap<String, Object> _childValue = _param1.getValue(_ind);\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onChildChanged" -> "@Override\r\n" +
+                    "public void onChildChanged(DataSnapshot _param1, String _param2) {\r\n" +
+                    "GenericTypeIndicator<HashMap<String, Object>> _ind = new GenericTypeIndicator<HashMap<String, Object>>() {};\r\n" +
+                    "final String _childKey = _param1.getKey();\r\n" +
+                    "final HashMap<String, Object> _childValue = _param1.getValue(_ind);\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onChildRemoved" -> "@Override\r\n" +
+                    "public void onChildRemoved(DataSnapshot _param1) {\r\n" +
+                    "GenericTypeIndicator<HashMap<String, Object>> _ind = new GenericTypeIndicator<HashMap<String, Object>>() {};\r\n" +
+                    "final String _childKey = _param1.getKey();\r\n" +
+                    "final HashMap<String, Object> _childValue = _param1.getValue(_ind);\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onChildMoved" -> "@Override\r\n" +
+                    "public void onChildMoved(DataSnapshot _param1, String _param2) {\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onCancelled" -> "@Override\r\n" +
+                    "public void onCancelled(DatabaseError _param1) {\r\n" +
+                    "final int _errorCode = _param1.getCode();\r\n" +
+                    "final String _errorMessage = _param1.getMessage();\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onSensorChanged" -> "@Override\r\n" +
+                    "public void onSensorChanged(SensorEvent _param1) {\r\n" +
+                    "float[] _rotationMatrix = new float[16];\r\n" +
+                    "SensorManager.getRotationMatrixFromVector(_rotationMatrix, _param1.values);\r\n" +
+                    "float[] _remappedRotationMatrix = new float[16];\r\n" +
+                    "SensorManager.remapCoordinateSystem(_rotationMatrix, SensorManager.AXIS_X, SensorManager.AXIS_Z, _remappedRotationMatrix);\r\n" +
+                    "float[] _orientations = new float[3];\r\n" +
+                    "SensorManager.getOrientation(_remappedRotationMatrix, _orientations);\r\n" +
+                    "for (int _i = 0; _i < 3; _i++) {\r\n" +
+                    "_orientations[_i] = (float)(Math.toDegrees(_orientations[_i]));\r\n" +
+                    "}\r\n" +
+                    "final double _x = _orientations[0];\r\n" +
+                    "final double _y = _orientations[1];\r\n" +
+                    "final double _z = _orientations[2];\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onAccuracyChanged" -> "@Override\r\n" +
+                    "public void onAccuracyChanged(Sensor _param1, int _param2) {\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onCreateUserComplete", "onSignInUserComplete" -> "@Override\r\n" +
+                    "public void onComplete(Task<AuthResult> _param1) {\r\n" +
+                    "final boolean _success = _param1.isSuccessful();\r\n" +
+                    "final String _errorMessage = _param1.getException() != null ? _param1.getException().getMessage() : \"\";\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onResetPasswordEmailSent" -> "@Override\r\n" +
+                    "public void onComplete(Task<Void> _param1) {\r\n" +
+                    "final boolean _success = _param1.isSuccessful();\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onUploadProgress" -> "@Override\r\n" +
+                    "public void onProgress(UploadTask.TaskSnapshot _param1) {\r\n" +
+                    "double _progressValue = (100.0 * _param1.getBytesTransferred()) / _param1.getTotalByteCount();\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onDownloadProgress" -> "@Override\r\n" +
+                    "public void onProgress(FileDownloadTask.TaskSnapshot _param1) {\r\n" +
+                    "double _progressValue = (100.0 * _param1.getBytesTransferred()) / _param1.getTotalByteCount();\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onUploadSuccess" -> "@Override\r\n" +
+                    "public void onComplete(Task<Uri> _param1) {\r\n" +
+                    "final String _downloadUrl = _param1.getResult().toString();\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onDownloadSuccess" -> "@Override\r\n" +
+                    "public void onSuccess(FileDownloadTask.TaskSnapshot _param1) {\r\n" +
+                    "final long _totalByteCount = _param1.getTotalByteCount();\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onDeleteSuccess" -> "@Override\r\n" +
+                    "public void onSuccess(Object _param1) {\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onFailure" -> "@Override\r\n" +
+                    "public void onFailure(Exception _param1) {\r\n" +
+                    "final String _message = _param1.getMessage();\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onResponse" -> "@Override\r\n" +
+                    "public void onResponse(String _param1, String _param2, HashMap<String, Object> _param3) {\r\n" +
+                    "final String _tag = _param1;\r\n" +
+                    "final String _response = _param2;\r\n" +
+                    "final HashMap<String, Object> _responseHeaders = _param3;\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onErrorResponse" -> "@Override\r\n" +
+                    "public void onErrorResponse(String _param1, String _param2) {\r\n" +
+                    "final String _tag = _param1;\r\n" +
+                    "final String _message = _param2;\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onSpeechResult" -> "@Override\r\n" +
+                    "public void onResults(Bundle _param1) {\r\n" +
+                    "final ArrayList<String> _results = _param1.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);\r\n" +
+                    "final String _result = _results.get(0);\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onSpeechError" -> "@Override\r\n" +
+                    "public void onError(int _param1) {\r\n" +
+                    "final String _errorMessage;\r\n" +
+                    "switch (_param1) {\r\n" +
+                    "case SpeechRecognizer.ERROR_AUDIO:\r\n" +
+                    "_errorMessage = \"audio error\";\r\n" +
+                    "break;\r\n" +
+                    "\r\n" +
+                    "case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:\r\n" +
+                    "_errorMessage = \"speech timeout\";\r\n" +
+                    "break;\r\n" +
+                    "\r\n" +
+                    "case SpeechRecognizer.ERROR_NO_MATCH:\r\n" +
+                    "_errorMessage = \"speech no match\";\r\n" +
+                    "break;\r\n" +
+                    "\r\n" +
+                    "case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:\r\n" +
+                    "_errorMessage = \"recognizer busy\";\r\n" +
+                    "break;\r\n" +
+                    "\r\n" +
+                    "case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:\r\n" +
+                    "_errorMessage = \"recognizer insufficient permissions\";\r\n" +
+                    "break;\r\n" +
+                    "\r\n" +
+                    "default:\r\n" +
+                    "_errorMessage = \"recognizer other error\";\r\n" +
+                    "break;\r\n" +
+                    "}\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onConnected" -> "@Override\r\n" +
+                    "public void onConnected(String _param1, HashMap<String, Object> _param2) {\r\n" +
+                    "final String _tag = _param1;\r\n" +
+                    "final HashMap<String, Object> _deviceData = _param2;\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onDataReceived" -> "@Override\r\n" +
+                    "public void onDataReceived(String _param1, byte[] _param2, int _param3) {\r\n" +
+                    "final String _tag = _param1;\r\n" +
+                    "final String _data = new String(_param2, 0, _param3);\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onDataSent" -> "@Override\r\n" +
+                    "public void onDataSent(String _param1, byte[] _param2) {\r\n" +
+                    "final String _tag = _param1;\r\n" +
+                    "final String _data = new String(_param2);\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onConnectionError" -> "@Override\r\n" +
+                    "public void onConnectionError(String _param1, String _param2, String _param3) {\r\n" +
+                    "final String _tag = _param1;\r\n" +
+                    "final String _connectionState = _param2;\r\n" +
+                    "final String _errorMessage = _param3;\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onConnectionStopped" -> "@Override\r\n" +
+                    "public void onConnectionStopped(String _param1) {\r\n" +
+                    "final String _tag = _param1;\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            case "onMapReady" -> eventLogic;
+            case "onMarkerClicked" -> "@Override\r\n" +
+                    "public boolean onMarkerClick(Marker _param1) {\r\n" +
+                    "final String _id = _param1.getTag().toString();\r\n" +
+                    eventLogic + "\r\n" +
+                    "return false;\r\n" +
+                    "}";
+            case "onLocationChanged" -> "@Override\r\n" +
+                    "public void onLocationChanged(Location _param1) {\r\n" +
+                    "final double _lat = _param1.getLatitude();\r\n" +
+                    "final double _lng = _param1.getLongitude();\r\n" +
+                    "final double _acc = _param1.getAccuracy();\r\n" +
+                    eventLogic + "\r\n" +
+                    "}";
+            default -> ManageEvent.f(targetId, eventName, eventLogic);
+        };
     }
 
     /**
@@ -670,8 +595,8 @@ public class Lx {
         } else {
             String initializer = getInitializer(typeName, parameters);
             String builtInType = mq.e(typeName);
-            if (initializer.length() <= 0) {
-                if (!(builtInType.equals("") || builtInType.equals("RewardedVideoAd") || builtInType.equals("FirebaseCloudMessage") || builtInType.equals("FragmentStatePagerAdapter"))) {
+            if (initializer.isEmpty()) {
+                if (!(builtInType.isEmpty() || builtInType.equals("RewardedVideoAd") || builtInType.equals("FirebaseCloudMessage") || builtInType.equals("FragmentStatePagerAdapter"))) {
                     fieldDeclaration += " " + builtInType + " " + typeInstanceName + ";";
                 } else {
                     switch (typeName) {
@@ -692,7 +617,7 @@ public class Lx {
             } else {
                 String typeNameOfField = builtInType;
 
-                if (builtInType.equals("") && "Videos".equals(typeName)) {
+                if (builtInType.isEmpty() && "Videos".equals(typeName)) {
                     typeNameOfField = "Intent";
                 }
 
@@ -855,7 +780,7 @@ public class Lx {
                                     parameterSpec.substring(lastIndexOfPeriod + 1);
                             break;
                         } else {
-                            continue processingParameters;
+                            continue;
                         }
                 }
 
@@ -871,7 +796,7 @@ public class Lx {
     /**
      * @return Code of an adapter for a ListView
      */
-    public static String getListAdapterCode(Ox ox, String widgetName, String itemResourceName, ArrayList<ViewBean> views, String onBindCustomViewLogic) {
+    public static String getListAdapterCode(Ox ox, String widgetName, String itemResourceName, ArrayList<ViewBean> views, String onBindCustomViewLogic, boolean isViewBindingEnabled) {
         String className = a(widgetName);
 
         String initializers = "";
@@ -906,18 +831,26 @@ public class Lx {
                 "public long getItemId(int _index) {\r\n" +
                 "return _index;\r\n" +
                 "}\r\n" +
-                "\r\n" +
-                "@Override\r\n" +
-                "public View getView(final int _position, View _v, ViewGroup _container) {\r\n" +
-                "LayoutInflater _inflater = getLayoutInflater();\r\n" +
-                "View _view = _v;\r\n" +
-                "if (_view == null) {\r\n" +
-                "_view = _inflater.inflate(R.layout." + itemResourceName + ", null);\r\n" +
-                "}\r\n";
+                "\r\n";
+        if (isViewBindingEnabled) {
+            String bindingName = ViewBindingBuilder.generateFileNameForLayout(itemResourceName);
+            baseCode += "@Override\r\n" +
+                    "public View getView(final int _position, View _v, ViewGroup _container) {\r\n" +
+                    bindingName + " binding = " + bindingName + ".inflate(getLayoutInflater());\r\n" +
+                    "View _view = binding.getRoot();\r\n";
+        } else {
+            baseCode += "@Override\r\n" +
+                    "public View getView(final int _position, View _v, ViewGroup _container) {\r\n" +
+                    "LayoutInflater _inflater = getLayoutInflater();\r\n" +
+                    "View _view = _v;\r\n" +
+                    "if (_view == null) {\r\n" +
+                    "_view = _inflater.inflate(R.layout." + itemResourceName + ", null);\r\n" +
+                    "}\r\n";
 
-        if (!TextUtils.isEmpty(initializers)) {
-            baseCode += "\r\n" +
-                    initializers;
+            if (!TextUtils.isEmpty(initializers)) {
+                baseCode += "\r\n" +
+                        initializers;
+            }
         }
 
         if (!TextUtils.isEmpty(onBindCustomViewLogic.trim())) {
@@ -1179,34 +1112,35 @@ public class Lx {
     /**
      * @return Initializer of a View to be added to _initialize(Bundle)
      */
-    public static String getViewInitializer(String type, String name, boolean isInFragment) {
+    public static String getViewInitializer(String type, String name, boolean isInFragment, boolean viewBinding) {
         String initializer = "";
 
         if (!type.equals("include") && !type.equals("#")) {
-            initializer = name + " = " +
-                    (isInFragment ? "_view.findViewById(R.id." : "findViewById(R.id.") +
-                    name + ");";
+            if (viewBinding) {
+                initializer = name + " = " +
+                        "binding." +
+                        ViewBindingBuilder.generateParameterFromId(name) + ";";
+            } else {
+                initializer = name + " = " +
+                        (isInFragment ? "_view.findViewById(R.id." : "findViewById(R.id.") +
+                        name + ");";
+            }
         }
 
-        switch (type) {
-            case "WebView":
-                return initializer + "\r\n" +
-                        name + ".getSettings().setJavaScriptEnabled(true);\r\n" +
-                        name + ".getSettings().setSupportZoom(true);";
-
-            case "MapView":
-                return initializer + "\r\n" +
-                        name + ".onCreate(_savedInstanceState);\r\n";
-
-            case "VideoView":
+        return switch (type) {
+            case "WebView" -> initializer + "\r\n" +
+                    name + ".getSettings().setJavaScriptEnabled(true);\r\n" +
+                    name + ".getSettings().setSupportZoom(true);";
+            case "MapView" -> initializer + "\r\n" +
+                    name + ".onCreate(_savedInstanceState);\r\n";
+            case "VideoView" -> {
                 String mediaControllerName = name + "_controller";
-                return initializer + "\r\n" +
+                yield initializer + "\r\n" +
                         "MediaController " + mediaControllerName + " = new MediaController(this);\r\n" +
                         name + ".setMediaController(" + mediaControllerName + ");";
-
-            default:
-                return initializer;
-        }
+            }
+            default -> initializer;
+        };
     }
 
     /**
@@ -1238,7 +1172,7 @@ public class Lx {
 
             case "FilePicker":
                 String mimeType;
-                if (parameters[0] != null && parameters[0].length() > 0) {
+                if (parameters[0] != null && !parameters[0].isEmpty()) {
                     mimeType = parameters[0].replace(";", "");
                 } else {
                     mimeType = "*/*";
@@ -1667,6 +1601,7 @@ public class Lx {
                 "buildscript {\r\n" +
                 "    repositories {\r\n" +
                 "        google()\r\n" +
+                "        mavenCentral()\r\n" +
                 "        jcenter()\r\n" +
                 "    }\r\n" +
                 "    dependencies {\r\n" +
@@ -1680,11 +1615,12 @@ public class Lx {
                 "allprojects {\r\n" +
                 "    repositories {\r\n" +
                 "        google()\r\n" +
+                "        mavenCentral()\r\n" +
                 "        jcenter()\r\n" +
                 "    }\r\n" +
                 "}\r\n" +
                 "\r\n" +
-                "task clean(type: Delete) {\r\n" +
+                "tasks.register(\"clean\", Delete) {\r\n" +
                 "    delete rootProject.buildDir\r\n" +
                 "}\r\n";
     }
@@ -1705,217 +1641,182 @@ public class Lx {
      * @return Line declaring a field required for <code>componentName</code>
      */
     public static String getComponentFieldCode(String componentName) {
-        switch (componentName) {
-            case "FirebaseDB":
-                return "private FirebaseDatabase _firebase = FirebaseDatabase.getInstance();";
-
-            case "Timer":
-                return "private Timer _timer = new Timer();";
-
-            case "FirebaseStorage":
-                return "private FirebaseStorage _firebase_storage = FirebaseStorage.getInstance();";
-
-            case "InterstitialAd":
-                return "private String _ad_unit_id;";
-
-            case "RewardedVideoAd":
-                return "private String _reward_ad_unit_id;";
-
-            default:
-                return "";
-        }
+        return switch (componentName) {
+            case "FirebaseDB" ->
+                    "private FirebaseDatabase _firebase = FirebaseDatabase.getInstance();";
+            case "Timer" -> "private Timer _timer = new Timer();";
+            case "FirebaseStorage" ->
+                    "private FirebaseStorage _firebase_storage = FirebaseStorage.getInstance();";
+            case "InterstitialAd" -> "private String _ad_unit_id;";
+            case "RewardedVideoAd" -> "private String _reward_ad_unit_id;";
+            default -> "";
+        };
     }
 
     public static String getListenerCode(String eventName, String componentName, String eventLogic) {
-        switch (eventName) {
-            case "onClickListener":
-                return componentName + ".setOnClickListener(new View.OnClickListener() {\r\n" +
-                        eventLogic + "\r\n" +
-                        "});";
-
-            case "sensorEventListener":
+        return switch (eventName) {
+            case "onClickListener" ->
+                    componentName + ".setOnClickListener(new View.OnClickListener() {\r\n" +
+                            eventLogic + "\r\n" +
+                            "});";
+            case "sensorEventListener" -> {
                 String sensorEventListenerName = "_" + componentName + "_sensor_listener";
-                return sensorEventListenerName + " = new SensorEventListener() {\r\n"
+                yield sensorEventListenerName + " = new SensorEventListener() {\r\n"
                         + eventLogic + "\r\n"
                         + "};\r\n"
                         + componentName + ".registerListener(" + sensorEventListenerName + ", " + componentName
                         + ".getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR), SensorManager.SENSOR_DELAY_NORMAL);";
-
-            case "onTextChangedListener":
-                return componentName + ".addTextChangedListener(new TextWatcher() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "});";
-
-            case "onDeleteSuccessListener":
-                return "_" + componentName + "_delete_success_listener = new OnSuccessListener() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "};";
-
-            case "onDownloadSuccessListener":
-                return "_" + componentName + "_download_success_listener = new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "};";
-
-            case "recognitionListener":
-                return componentName + ".setRecognitionListener(new RecognitionListener() {\r\n"
-                        + "@Override\r\n"
-                        + "public void onReadyForSpeech(Bundle _param1) {\r\n"
-                        + "}\r\n"
-                        + "\r\n"
-                        + "@Override\r\n"
-                        + "public void onBeginningOfSpeech() {\r\n"
-                        + "}\r\n"
-                        + "\r\n"
-                        + "@Override\r\n"
-                        + "public void onRmsChanged(float _param1) {\r\n"
-                        + "}\r\n"
-                        + "\r\n"
-                        + "@Override\r\n"
-                        + "public void onBufferReceived(byte[] _param1) {\r\n"
-                        + "}\r\n"
-                        + "\r\n"
-                        + "@Override\r\n"
-                        + "public void onEndOfSpeech() {\r\n"
-                        + "}\r\n"
-                        + "\r\n"
-                        + "@Override\r\n"
-                        + "public void onPartialResults(Bundle _param1) {\r\n"
-                        + "}\r\n"
-                        + "\r\n"
-                        + "@Override\r\n"
-                        + "public void onEvent(int _param1, Bundle _param2) {\r\n"
-                        + "}\r\n"
-                        + "\r\n"
-                        + eventLogic + "\r\n"
-                        + "});";
-
-            case "onFailureListener":
-                return "_" + componentName + "_failure_listener = new OnFailureListener() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "};";
-
-            case "onDownloadProgressListener":
-                return "_" + componentName + "_download_progress_listener = new OnProgressListener<FileDownloadTask.TaskSnapshot>() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "};";
-
-            case "onMapMarkerClickListener":
-                return "_" + componentName + "_controller.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "});";
-
-            case "authCreateUserComplete":
-                return "_" + componentName + "_create_user_listener = new OnCompleteListener<AuthResult>() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "};";
-
-            case "webViewClient":
-                return componentName + ".setWebViewClient(new WebViewClient() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "});";
-
-            case "requestListener":
-                return "_" + componentName + "_request_listener = new RequestNetwork.RequestListener() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "};";
-
-            case "onItemSelectedListener":
-                return componentName + ".setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "});";
-
-            case "onMapReadyCallback":
+            }
+            case "onTextChangedListener" ->
+                    componentName + ".addTextChangedListener(new TextWatcher() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "});";
+            case "onDeleteSuccessListener" ->
+                    "_" + componentName + "_delete_success_listener = new OnSuccessListener() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "};";
+            case "onDownloadSuccessListener" ->
+                    "_" + componentName + "_download_success_listener = new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "};";
+            case "recognitionListener" ->
+                    componentName + ".setRecognitionListener(new RecognitionListener() {\r\n"
+                            + "@Override\r\n"
+                            + "public void onReadyForSpeech(Bundle _param1) {\r\n"
+                            + "}\r\n"
+                            + "\r\n"
+                            + "@Override\r\n"
+                            + "public void onBeginningOfSpeech() {\r\n"
+                            + "}\r\n"
+                            + "\r\n"
+                            + "@Override\r\n"
+                            + "public void onRmsChanged(float _param1) {\r\n"
+                            + "}\r\n"
+                            + "\r\n"
+                            + "@Override\r\n"
+                            + "public void onBufferReceived(byte[] _param1) {\r\n"
+                            + "}\r\n"
+                            + "\r\n"
+                            + "@Override\r\n"
+                            + "public void onEndOfSpeech() {\r\n"
+                            + "}\r\n"
+                            + "\r\n"
+                            + "@Override\r\n"
+                            + "public void onPartialResults(Bundle _param1) {\r\n"
+                            + "}\r\n"
+                            + "\r\n"
+                            + "@Override\r\n"
+                            + "public void onEvent(int _param1, Bundle _param2) {\r\n"
+                            + "}\r\n"
+                            + "\r\n"
+                            + eventLogic + "\r\n"
+                            + "});";
+            case "onFailureListener" ->
+                    "_" + componentName + "_failure_listener = new OnFailureListener() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "};";
+            case "onDownloadProgressListener" ->
+                    "_" + componentName + "_download_progress_listener = new OnProgressListener<FileDownloadTask.TaskSnapshot>() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "};";
+            case "onMapMarkerClickListener" ->
+                    "_" + componentName + "_controller.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "});";
+            case "authCreateUserComplete" ->
+                    "_" + componentName + "_create_user_listener = new OnCompleteListener<AuthResult>() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "};";
+            case "webViewClient" -> componentName + ".setWebViewClient(new WebViewClient() {\r\n"
+                    + eventLogic + "\r\n"
+                    + "});";
+            case "requestListener" ->
+                    "_" + componentName + "_request_listener = new RequestNetwork.RequestListener() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "};";
+            case "onItemSelectedListener" ->
+                    componentName + ".setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "});";
+            case "onMapReadyCallback" -> {
                 String googleMapControllerName = "_" + componentName + "_controller";
-                return googleMapControllerName + " = new GoogleMapController(" + componentName + ", new OnMapReadyCallback() {\r\n"
+                yield googleMapControllerName + " = new GoogleMapController(" + componentName + ", new OnMapReadyCallback() {\r\n"
                         + "@Override\r\n"
                         + "public void onMapReady(GoogleMap _googleMap) {\r\n"
                         + googleMapControllerName + ".setGoogleMap(_googleMap);\r\n"
                         + eventLogic + "\r\n"
                         + "}\r\n"
                         + "});";
-
-            case "animatorListener":
-                return componentName + ".addListener(new Animator.AnimatorListener() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "});";
-
-            case "onItemClickListener":
-                return componentName + ".setOnItemClickListener(new AdapterView.OnItemClickListener() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "});";
-
-            case "authSignInUserComplete":
-                return "_" + componentName + "_sign_in_listener = new OnCompleteListener<AuthResult>() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "};";
-
-            case "onSeekBarChangeListener":
-                return componentName + ".setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "});";
-
-            case "onItemLongClickListener":
-                return componentName + ".setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "});";
-
-            case "onUploadSuccessListener":
-                return "_" + componentName + "_upload_success_listener = new OnCompleteListener<Uri>() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "};";
-
-            case "onDateChangeListener":
-                return componentName + ".setOnDateChangeListener(new CalendarView.OnDateChangeListener() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "});";
-
-            case "bluetoothConnectionListener":
-                return "_" + componentName + "_bluetooth_connection_listener = new BluetoothConnect.BluetoothConnectionListener() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "};";
-
-            case "locationListener":
-                return "_" + componentName + "_location_listener = new LocationListener() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "\r\n"
-                        + "@Override\r\n"
-                        + "public void onStatusChanged(String provider, int status, Bundle extras) {\r\n"
-                        + "}\r\n"
-                        + "\r\n"
-                        + "@Override\r\n"
-                        + "public void onProviderEnabled(String provider) {\r\n"
-                        + "}\r\n"
-                        + "\r\n"
-                        + "@Override\r\n"
-                        + "public void onProviderDisabled(String provider) {\r\n"
-                        + "}\r\n"
-                        + "};";
-
-            case "authResetEmailSent":
-                return "_" + componentName + "_reset_password_listener = new OnCompleteListener<Void>() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "};";
-
-            case "onCheckChangedListener":
-                return componentName + ".setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "});";
-
-            case "onUploadProgressListener":
-                return "_" + componentName + "_upload_progress_listener = new OnProgressListener<UploadTask.TaskSnapshot>() {\r\n"
-                        + eventLogic + "\r\n"
-                        + "};";
-
-            case "childEventListener":
+            }
+            case "animatorListener" ->
+                    componentName + ".addListener(new Animator.AnimatorListener() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "});";
+            case "onItemClickListener" ->
+                    componentName + ".setOnItemClickListener(new AdapterView.OnItemClickListener() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "});";
+            case "authSignInUserComplete" ->
+                    "_" + componentName + "_sign_in_listener = new OnCompleteListener<AuthResult>() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "};";
+            case "onSeekBarChangeListener" ->
+                    componentName + ".setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "});";
+            case "onItemLongClickListener" ->
+                    componentName + ".setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "});";
+            case "onUploadSuccessListener" ->
+                    "_" + componentName + "_upload_success_listener = new OnCompleteListener<Uri>() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "};";
+            case "onDateChangeListener" ->
+                    componentName + ".setOnDateChangeListener(new CalendarView.OnDateChangeListener() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "});";
+            case "bluetoothConnectionListener" ->
+                    "_" + componentName + "_bluetooth_connection_listener = new BluetoothConnect.BluetoothConnectionListener() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "};";
+            case "locationListener" ->
+                    "_" + componentName + "_location_listener = new LocationListener() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "\r\n"
+                            + "@Override\r\n"
+                            + "public void onStatusChanged(String provider, int status, Bundle extras) {\r\n"
+                            + "}\r\n"
+                            + "\r\n"
+                            + "@Override\r\n"
+                            + "public void onProviderEnabled(String provider) {\r\n"
+                            + "}\r\n"
+                            + "\r\n"
+                            + "@Override\r\n"
+                            + "public void onProviderDisabled(String provider) {\r\n"
+                            + "}\r\n"
+                            + "};";
+            case "authResetEmailSent" ->
+                    "_" + componentName + "_reset_password_listener = new OnCompleteListener<Void>() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "};";
+            case "onCheckChangedListener" ->
+                    componentName + ".setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "});";
+            case "onUploadProgressListener" ->
+                    "_" + componentName + "_upload_progress_listener = new OnProgressListener<UploadTask.TaskSnapshot>() {\r\n"
+                            + eventLogic + "\r\n"
+                            + "};";
+            case "childEventListener" -> {
                 String childEventListenerName = "_" + componentName + "_child_listener";
-                return childEventListenerName + " = new ChildEventListener() {\r\n"
+                yield childEventListenerName + " = new ChildEventListener() {\r\n"
                         + eventLogic + "\r\n" +
                         "};\r\n"
                         + componentName + ".addChildEventListener(" + childEventListenerName + ");";
-
-            default:
-                return ManageEvent.g(eventName, componentName, eventLogic);
-        }
+            }
+            default -> ManageEvent.g(eventName, componentName, eventLogic);
+        };
     }
 
     /**
@@ -1943,6 +1844,7 @@ public class Lx {
                 "import android.graphics.RectF;\r\n" +
                 "import android.media.ExifInterface;\r\n" +
                 "import android.net.Uri;\r\n" +
+                "import android.os.Build;\r\n" +
                 "import android.os.Environment;\r\n" +
                 "import android.provider.DocumentsContract;\r\n" +
                 "import android.provider.MediaStore;\r\n" +
@@ -2176,18 +2078,27 @@ public class Lx {
                 "                    path = Environment.getExternalStorageDirectory() + \"/\" + split[1];\r\n" +
                 "                }\r\n" +
                 "            } else if (isDownloadsDocument(uri)) {\r\n" +
-                "                final String id = DocumentsContract.getDocumentId(uri);\r\n" +
+                "                final String docId = DocumentsContract.getDocumentId(uri);\r\n" +
+                "                final String[] split = docId.split(\":\");\r\n" +
+                "                final String type = split[0];\r\n" +
                 "\r\n" +
-                "                if (!TextUtils.isEmpty(id)) {\r\n" +
-                "                    if (id.startsWith(\"raw:\")) {\r\n" +
-                "                        return id.replaceFirst(\"raw:\", \"\");\r\n" +
-                "                    }\r\n" +
+                "                if (\"raw\".equalsIgnoreCase(type)) {\r\n" +
+                "                    return split[1];\r\n" +
+                //referenced from: https://github.com/Javernaut/WhatTheCodec/issues/2
+                "                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && \"msf\".equalsIgnoreCase(type)) {\r\n" +
+                "                    final String selection = \"_id=?\";\r\n" +
+                "                    final String[] selectionArgs = new String[]{\r\n" +
+                "                            split[1]\r\n" +
+                "                    };\r\n" +
+                "\r\n" +
+                "                    path = getDataColumn(context, MediaStore.Downloads.EXTERNAL_CONTENT_URI, selection, selectionArgs);\r\n" +
+                "                } else {\r\n" +
+                "\r\n" +
+                "                    final Uri contentUri = ContentUris\r\n" +
+                "                            .withAppendedId(Uri.parse(\"content://downloads/public_downloads\"), Long.valueOf(docId));\r\n" +
+                "\r\n" +
+                "                    path = getDataColumn(context, contentUri, null, null);\r\n" +
                 "                }\r\n" +
-                "\r\n" +
-                "                final Uri contentUri = ContentUris\r\n" +
-                "                        .withAppendedId(Uri.parse(\"content://downloads/public_downloads\"), Long.valueOf(id));\r\n" +
-                "\r\n" +
-                "                path = getDataColumn(context, contentUri, null, null);\r\n" +
                 "            } else if (isMediaDocument(uri)) {\r\n" +
                 "                final String docId = DocumentsContract.getDocumentId(uri);\r\n" +
                 "                final String[] split = docId.split(\":\");\r\n" +
@@ -3233,7 +3144,7 @@ public class Lx {
         return formattedCode.toString();
     }
 
-    public static String pagerAdapter(Ox ox, String pagerName, String pagerItemLayoutName, ArrayList<ViewBean> pagerItemViews, String onBindCustomViewLogic) {
+    public static String pagerAdapter(Ox ox, String pagerName, String pagerItemLayoutName, ArrayList<ViewBean> pagerItemViews, String onBindCustomViewLogic, boolean isViewBindingEnabled) {
         String adapterName = a(pagerName);
 
         String viewsInitializer = "";
@@ -3285,14 +3196,21 @@ public class Lx {
                 "public CharSequence getPageTitle(int pos) {\r\n" +
                 "return onTabLayoutNewTabAdded(pos);\r\n" +
                 "}\r\n" +
-                "\r\n" +
-                "@Override\r\n" +
-                "public Object instantiateItem(ViewGroup _container,  final int _position) {\r\n" +
-                "View _view = LayoutInflater.from(_context).inflate(R.layout." + pagerItemLayoutName + ", _container, false);\r\n";
+                "\r\n";
+        if (isViewBindingEnabled) {
+            String bindingName = ViewBindingBuilder.generateFileNameForLayout(pagerItemLayoutName);
+            baseCode += "@Override\r\n" +
+                    "public Object instantiateItem(ViewGroup _container, final int _position) {\r\n" +
+                    bindingName + " binding = " + bindingName + ".inflate(LayoutInflater.from(_context), _container, false);\r\n";
+        } else {
+            baseCode += "@Override\r\n" +
+                    "public Object instantiateItem(ViewGroup _container,  final int _position) {\r\n" +
+                    "View _view = LayoutInflater.from(_context).inflate(R.layout." + pagerItemLayoutName + ", _container, false);\r\n";
 
-        if (!TextUtils.isEmpty(viewsInitializer)) {
-            baseCode += "\r\n" +
-                    viewsInitializer;
+            if (!TextUtils.isEmpty(viewsInitializer)) {
+                baseCode += "\r\n" +
+                        viewsInitializer;
+            }
         }
 
         if (!TextUtils.isEmpty(onBindCustomViewLogic)) {
@@ -3308,7 +3226,7 @@ public class Lx {
                 "}\r\n";
     }
 
-    public static String recyclerViewAdapter(Ox ox, String recyclerViewName, String itemLayoutName, ArrayList<ViewBean> itemViews, String onBindCustomViewLogic) {
+    public static String recyclerViewAdapter(Ox ox, String recyclerViewName, String itemLayoutName, ArrayList<ViewBean> itemViews, String onBindCustomViewLogic, boolean isViewBindingEnabled) {
         String adapterName = a(recyclerViewName);
         String viewsInitializer = "";
         StringBuilder viewInitBuilder = new StringBuilder(viewsInitializer);
@@ -3336,14 +3254,22 @@ public class Lx {
                 "_v.setLayoutParams(_lp);\r\n" +
                 "return new ViewHolder(_v);\r\n" +
                 "}\r\n" +
-                "\r\n" +
-                "@Override\r\n" +
-                "public void onBindViewHolder(ViewHolder _holder, final int _position) {\r\n" +
-                "View _view = _holder.itemView;\r\n";
+                "\r\n";
+        if (isViewBindingEnabled) {
+            String bindingName = ViewBindingBuilder.generateFileNameForLayout(itemLayoutName);
+            baseCode += "@Override\r\n" +
+                    "public void onBindViewHolder(ViewHolder _holder, final int _position) {\r\n" +
+                    "View _view = _holder.itemView;\r\n" +
+                    bindingName + " binding = " + bindingName + ".bind(_view);\r\n";
+        } else {
+            baseCode += "@Override\r\n" +
+                    "public void onBindViewHolder(ViewHolder _holder, final int _position) {\r\n" +
+                    "View _view = _holder.itemView;\r\n";
 
-        if (!TextUtils.isEmpty(viewsInitializer)) {
-            baseCode += "\r\n" +
-                    viewsInitializer;
+            if (!TextUtils.isEmpty(viewsInitializer)) {
+                baseCode += "\r\n" +
+                        viewsInitializer;
+            }
         }
 
         if (!TextUtils.isEmpty(onBindCustomViewLogic)) {

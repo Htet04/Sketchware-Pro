@@ -1,10 +1,11 @@
 package mod.hey.studios.util;
 
-import static com.besome.sketch.SketchApplication.getContext;
+import static pro.sketchware.SketchApplication.getContext;
 
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -12,12 +13,16 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
 import android.os.Build;
 import android.os.StrictMode;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 
 import androidx.annotation.StringRes;
+import androidx.activity.ComponentActivity;
 
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.reflect.TypeToken;
 
@@ -26,8 +31,8 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import a.a.a.xB;
-import mod.agus.jcoderz.lib.FileUtil;
-import mod.hasrat.lib.BaseTextWatcher;
+import pro.sketchware.utility.FileUtil;
+import pro.sketchware.lib.base.BaseTextWatcher;
 
 public class Helper {
     public static final TypeToken<HashMap<String, Object>> TYPE_MAP = new TypeToken<>() {
@@ -82,11 +87,11 @@ public class Helper {
         return String.format(getResString(resId), formatArgs);
     }
 
-    public static View.OnClickListener getBackPressedClickListener(final Activity activity) {
-        return v -> activity.onBackPressed();
+    public static View.OnClickListener getBackPressedClickListener(final ComponentActivity activity) {
+        return v -> activity.getOnBackPressedDispatcher().onBackPressed();
     }
 
-    public static DialogDismissListener getDialogDismissListener(final Dialog dialog) {
+    public static DialogDismissListener getDialogDismissListener(final DialogInterface dialog) {
         return new DialogDismissListener(dialog);
     }
 
@@ -98,9 +103,29 @@ public class Helper {
         view.setClickable(true);
     }
 
+    public static void addBasicTextChangedListener(TextInputEditText input, BasicTextChangedListener listener) {
+        input.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                listener.onTextChanged(s.toString());
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+        });
+    }
+
+    public interface BasicTextChangedListener {
+        void onTextChanged(String str);
+    }
+
     public static void applyRippleToToolbarView(View view) {
         GradientDrawable content = new GradientDrawable();
-        content.setColor(Color.parseColor("#008dcd"));
         content.setCornerRadius(90);
 
         view.setBackground(
@@ -179,12 +204,12 @@ public class Helper {
      */
     public static class DialogDismissListener implements View.OnClickListener {
 
-        private final Dialog dialog;
+        private final DialogInterface dialog;
 
         /**
          * Constructor for {@link Helper#getDialogDismissListener(Dialog)}.
          */
-        private DialogDismissListener(Dialog dialog) {
+        private DialogDismissListener(DialogInterface dialog) {
             this.dialog = dialog;
         }
 

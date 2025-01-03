@@ -1,6 +1,6 @@
 package a.a.a;
 
-import com.sketchware.remod.xml.XmlBuilder;
+import pro.sketchware.xml.XmlBuilder;
 
 import java.util.HashMap;
 
@@ -46,7 +46,7 @@ public class XmlBuilderHelper {
 
         String trimmedValue = value.trim();
         value = trimmedValue;
-        if (trimmedValue.length() > 0) {
+        if (!trimmedValue.isEmpty()) {
             name = trimmedValue;
             if (trimmedValue.charAt(0) == '"') {
                 name = trimmedValue.substring(1);

@@ -13,7 +13,7 @@ import android.widget.TextView;
 
 import com.besome.sketch.beans.AdUnitBean;
 import com.besome.sketch.beans.ProjectLibraryBean;
-import com.sketchware.remod.R;
+import pro.sketchware.R;
 
 import java.util.ArrayList;
 
@@ -189,7 +189,7 @@ public class AssignAdUnitStepView extends LinearLayout implements Uu, OnClickLis
 
     @Override
     public void setData(ProjectLibraryBean projectLibraryBean) {
-        if (projectLibraryBean.adUnits.size() > 0) {
+        if (!projectLibraryBean.adUnits.isEmpty()) {
             for (AdUnitBean adUnitBean : projectLibraryBean.adUnits) {
                 adUnits.add(adUnitBean.name + " : " + adUnitBean.id);
             }

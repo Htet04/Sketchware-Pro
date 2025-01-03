@@ -19,7 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.besome.sketch.beans.AdUnitBean;
 import com.besome.sketch.beans.ProjectLibraryBean;
 import com.google.android.material.textfield.TextInputLayout;
-import com.sketchware.remod.R;
+import pro.sketchware.R;
 
 import java.util.ArrayList;
 
@@ -48,7 +48,7 @@ public class AddAdUnitStepView extends LinearLayout implements Uu, OnClickListen
     private void createAdUnit() {
         aB dialog = new aB((Activity) getContext());
         dialog.b(Helper.getResString(R.string.design_library_admob_dialog_add_adunit_title));
-        dialog.a(R.drawable.add_96_blue);
+        dialog.a(R.drawable.ic_mtrl_add);
         View rootView = wB.a(getContext(), R.layout.manage_library_setting_admob_adunit_add);
 
         TextInputLayout tiName = rootView.findViewById(R.id.ti_name);
@@ -63,7 +63,7 @@ public class AddAdUnitStepView extends LinearLayout implements Uu, OnClickListen
 
         edName.setPrivateImeOptions("defaultInputmode=english;");
         dialog.a(rootView);
-        dialog.b(Helper.getResString(R.string.common_word_add), view -> {
+        dialog.b(Helper.getResString(R.string.common_word_add), v -> {
             if (!nameValidator.b()) {
                 edName.requestFocus();
             } else if (!adUnitValidator.b()) {
@@ -85,7 +85,7 @@ public class AddAdUnitStepView extends LinearLayout implements Uu, OnClickListen
         dialog.b(Helper.getResString(R.string.design_library_admob_dialog_delete_adunit_title));
         dialog.a(R.drawable.delete_96);
         dialog.a(Helper.getResString(R.string.design_library_admob_dialog_confirm_delete_adunit));
-        dialog.b(Helper.getResString(R.string.common_word_delete), view -> {
+        dialog.b(Helper.getResString(R.string.common_word_delete), v -> {
             adUnitBeanArrayList.remove(position);
             adUnitsAdapter.notifyItemRemoved(position);
             bB.a(getContext(), Helper.getResString(R.string.common_message_complete_delete), 0).show();
@@ -122,7 +122,7 @@ public class AddAdUnitStepView extends LinearLayout implements Uu, OnClickListen
 
     @Override
     public boolean isValid() {
-        if (adUnitBeanArrayList.size() > 0) {
+        if (!adUnitBeanArrayList.isEmpty()) {
             return true;
         } else {
             bB.a(getContext(), Helper.getResString(R.string.design_library_admob_setting_message_add_ad_unit), 1).show();
@@ -146,7 +146,7 @@ public class AddAdUnitStepView extends LinearLayout implements Uu, OnClickListen
     private class AdUnitsAdapter extends RecyclerView.Adapter<AdUnitsAdapter.ViewHolder> {
         @Override
         public int getItemCount() {
-            if (adUnitBeanArrayList.size() == 0) {
+            if (adUnitBeanArrayList.isEmpty()) {
                 tvWarning.setVisibility(View.VISIBLE);
             } else {
                 tvWarning.setVisibility(View.GONE);

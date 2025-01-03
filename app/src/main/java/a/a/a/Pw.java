@@ -13,8 +13,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.besome.sketch.beans.ProjectFileBean;
-import com.sketchware.remod.R;
-import com.sketchware.remod.databinding.PropertyPopupSelectorSingleBinding;
+import pro.sketchware.R;
+import pro.sketchware.databinding.PropertyPopupSelectorSingleBinding;
 
 import java.util.ArrayList;
 
@@ -72,9 +72,10 @@ public class Pw extends RelativeLayout implements View.OnClickListener {
         }
 
         dialog.a(propertyBinding.getRoot());
-        dialog.b(xB.b().a(getContext(), R.string.common_word_select), view -> {
+        dialog.b(xB.b().a(getContext(), R.string.common_word_select), v -> {
             for (int i = 0, childCount = rgContent.getChildCount(); i < childCount; i++) {
                 RadioButton radioButton = (RadioButton) rgContent.getChildAt(i);
+
                 if (radioButton.isChecked()) {
                     setValue(radioButton.getTag().toString());
                 }
@@ -127,7 +128,7 @@ public class Pw extends RelativeLayout implements View.OnClickListener {
         int var2 = getResources().getIdentifier(key, "string", getContext().getPackageName());
         if (var2 > 0) {
             tvName.setText(xB.b().a(getResources(), var2));
-            f = R.drawable.form_48;
+            f = R.drawable.ic_mtrl_interface;
             if (propertyMenuItem.getVisibility() == View.VISIBLE) {
                 ImageView var3 = (ImageView) findViewById(R.id.img_icon);
                 TextView var4 = (TextView) findViewById(R.id.tv_title);

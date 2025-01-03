@@ -24,21 +24,24 @@ import com.besome.sketch.editor.view.DraggingListener;
 import com.besome.sketch.editor.view.ViewEditor;
 import com.besome.sketch.editor.view.ViewProperty;
 import com.besome.sketch.editor.view.palette.PaletteWidget;
-import com.sketchware.remod.R;
+import pro.sketchware.R;
+import pro.sketchware.widgets.WidgetsCreatorManager;
 
 import java.util.ArrayList;
 
 public class ViewEditorFragment extends qA {
 
     private ProjectFileBean projectFileBean;
-    private ViewEditor viewEditor;
-    private boolean k = false;
+    public ViewEditor viewEditor;
+    private boolean isFabEnabled = false;
     private ViewProperty viewProperty;
     private ObjectAnimator n;
     private ObjectAnimator o;
     private boolean p;
     private boolean q = false;
     private String sc_id;
+
+    private WidgetsCreatorManager widgetsCreatorManager;
 
     public ViewEditorFragment() {
     }
@@ -47,6 +50,8 @@ public class ViewEditorFragment extends qA {
         setHasOptionsMenu(true);
         viewEditor = viewGroup.findViewById(R.id.view_editor);
         viewEditor.setScreenType(getResources().getConfiguration().orientation);
+        widgetsCreatorManager = new WidgetsCreatorManager(this);
+        viewEditor.widgetsCreatorManager = widgetsCreatorManager;
         viewProperty = requireActivity().findViewById(R.id.view_property);
         viewProperty.setOnPropertyListener(new Iw() {
             @Override
@@ -65,7 +70,7 @@ public class ViewEditorFragment extends qA {
             invalidateOptionsMenu();
         });
         viewProperty.setOnEventClickListener(eventBean -> toLogicEditorActivity(eventBean.targetId, eventBean.eventName, eventBean.eventName));
-        viewProperty.setOnPropertyTargetChangeListener(viewEditor::a);
+        viewProperty.setOnPropertyTargetChangeListener(viewEditor::updateSelection);
         viewEditor.setOnWidgetSelectedListener(new cy() {
             @Override
             public void a() {
@@ -119,7 +124,7 @@ public class ViewEditorFragment extends qA {
 
     public void a(ProjectFileBean projectFileBean) {
         this.projectFileBean = projectFileBean;
-        k = projectFileBean.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_FAB);
+        isFabEnabled = projectFileBean.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_FAB);
         viewEditor.a(sc_id, projectFileBean);
         viewEditor.h();
         viewProperty.a(sc_id, this.projectFileBean);
@@ -128,9 +133,9 @@ public class ViewEditorFragment extends qA {
         invalidateOptionsMenu();
     }
 
-    private void a(ViewBean var1) {
-        viewEditor.k();
-        if (k) viewEditor.a(var1);
+    private void a(ViewBean viewBean) {
+        viewEditor.removeFab();
+        if (isFabEnabled) viewEditor.addFab(viewBean);
     }
 
     private void a(String viewId) {
@@ -210,7 +215,7 @@ public class ViewEditorFragment extends qA {
         return projectFileBean;
     }
 
-    private void e() {
+    public void e() {
         viewEditor.removeWidgetsAndLayouts();
         viewEditor.setPaletteLayoutVisible(View.VISIBLE);
         viewEditor.addWidgetLayout(PaletteWidget.a.a, "");
@@ -219,6 +224,8 @@ public class ViewEditorFragment extends qA {
         viewEditor.addWidgetLayout(PaletteWidget.a.c, "");
         viewEditor.addWidgetLayout(PaletteWidget.a.d, "");
         viewEditor.extraWidgetLayout("", "RadioGroup");
+        viewEditor.extraWidgetLayout("", "RelativeLayout");
+        widgetsCreatorManager.addWidgetsByTitle("Layouts");
 
         viewEditor.paletteWidget.extraTitle("AndroidX", 0);
         viewEditor.extraWidgetLayout("", "TabLayout");
@@ -227,6 +234,7 @@ public class ViewEditorFragment extends qA {
         viewEditor.extraWidgetLayout("", "CardView");
         viewEditor.extraWidgetLayout("", "TextInputLayout");
         viewEditor.extraWidgetLayout("", "SwipeRefreshLayout");
+        widgetsCreatorManager.addWidgetsByTitle("AndroidX");
 
         viewEditor.addWidget(PaletteWidget.b.c, "", "EditText", "Edit Text");
         viewEditor.extraWidget("", "AutoCompleteTextView", "AutoCompleteTextView");
@@ -244,6 +252,7 @@ public class ViewEditorFragment extends qA {
         viewEditor.extraWidget("", "SearchView", "SearchView");
         viewEditor.extraWidget("", "VideoView", "VideoView");
         viewEditor.addWidget(PaletteWidget.b.h, "", "WebView", "WebView");
+        widgetsCreatorManager.addWidgetsByTitle("Widgets");
 
         viewEditor.paletteWidget.extraTitle("List", 1);
         viewEditor.addWidget(PaletteWidget.b.e, "", "ListView", "ListView");
@@ -251,6 +260,7 @@ public class ViewEditorFragment extends qA {
         viewEditor.extraWidget("", "RecyclerView", "RecyclerView");
         viewEditor.addWidget(PaletteWidget.b.f, "", "Spinner", "Spinner");
         viewEditor.extraWidget("", "ViewPager", "ViewPager");
+        widgetsCreatorManager.addWidgetsByTitle("List");
 
         viewEditor.paletteWidget.extraTitle("Library", 1);
         viewEditor.extraWidget("", "WaveSideBar", "WaveSideBar");
@@ -258,12 +268,14 @@ public class ViewEditorFragment extends qA {
         viewEditor.extraWidget("", "CodeView", "CodeView");
         viewEditor.extraWidget("", "LottieAnimation", "LottieAnimation");
         viewEditor.extraWidget("", "OTPView", "OTPView");
+        widgetsCreatorManager.addWidgetsByTitle("Library");
 
         viewEditor.paletteWidget.extraTitle("Google", 1);
         viewEditor.addWidget(PaletteWidget.b.l, "", "AdView", "AdView");
         viewEditor.addWidget(PaletteWidget.b.n, "", "MapView", "MapView");
         viewEditor.extraWidget("", "SignInButton", "SignInButton");
         viewEditor.extraWidget("", "YoutubePlayer", "YoutubePlayer");
+        widgetsCreatorManager.addWidgetsByTitle("Google");
 
         viewEditor.paletteWidget.extraTitle("Date & Time", 1);
         viewEditor.extraWidget("", "AnalogClock", "AnalogClock");
@@ -271,6 +283,8 @@ public class ViewEditorFragment extends qA {
         viewEditor.extraWidget("", "TimePicker", "TimePicker");
         viewEditor.extraWidget("", "DatePicker", "DatePicker");
         viewEditor.addWidget(PaletteWidget.b.k, "", "CalendarView", "CalendarView");
+        widgetsCreatorManager.addWidgetsByTitle("Date & Time");
+        widgetsCreatorManager.addExtraClasses();
     }
 
     private void startAnimation() {
@@ -326,6 +340,9 @@ public class ViewEditorFragment extends qA {
                     ViewBean viewBean = jC.a(sc_id).c(projectFileBean.getXmlName(), movedData.id);
                     viewBean.copy(movedData);
                     viewEditor.a(viewEditor.b(viewBean, false), false);
+                } else if (actionType == HistoryViewBean.ACTION_TYPE_OVERRIDE) {
+                    jC.a(sc_id).c.put(projectFileBean.getXmlName(), historyViewBean.getAddedData());
+                    i();
                 }
             }
             invalidateOptionsMenu();
@@ -333,6 +350,7 @@ public class ViewEditorFragment extends qA {
     }
 
     public void i() {
+        invalidateOptionsMenu();
         if (projectFileBean != null) {
             b(jC.a(sc_id).d(projectFileBean.getXmlName()));
             a(jC.a(sc_id).h(projectFileBean.getXmlName()));
@@ -388,7 +406,12 @@ public class ViewEditorFragment extends qA {
                     viewBean.index = movedData.preIndex;
                     viewBean.parent = movedData.preParent;
                     viewBean.preParent = movedData.parent;
+                    viewBean.parentType = movedData.preParentType;
+                    viewBean.preParentType = movedData.parentType;
                     viewEditor.a(viewEditor.b(viewBean, false), false);
+                } else if (actionType == HistoryViewBean.ACTION_TYPE_OVERRIDE) {
+                    jC.a(sc_id).c.put(projectFileBean.getXmlName(), historyViewBean.getRemovedData());
+                    i();
                 }
             }
             invalidateOptionsMenu();
@@ -424,7 +447,7 @@ public class ViewEditorFragment extends qA {
                 for (ViewBean viewBean : jC.a(sc_id).d(projectFileBean.getXmlName())) {
                     c(viewBean);
                 }
-                if (k) {
+                if (isFabEnabled) {
                     c(jC.a(sc_id).h(projectFileBean.getXmlName()));
                 }
             }
@@ -451,21 +474,8 @@ public class ViewEditorFragment extends qA {
         menu.findItem(R.id.menu_view_redo).setEnabled(false);
         menu.findItem(R.id.menu_view_undo).setEnabled(false);
         if (projectFileBean != null) {
-            if (cC.c(sc_id).f(projectFileBean.getXmlName())) {
-                menu.findItem(R.id.menu_view_redo).setIcon(R.drawable.ic_redo_white_48dp);
-                menu.findItem(R.id.menu_view_redo).setEnabled(true);
-            } else {
-                menu.findItem(R.id.menu_view_redo).setIcon(R.drawable.ic_redo_grey_48dp);
-                menu.findItem(R.id.menu_view_redo).setEnabled(false);
-            }
-
-            if (cC.c(sc_id).g(projectFileBean.getXmlName())) {
-                menu.findItem(R.id.menu_view_undo).setIcon(R.drawable.ic_undo_white_48dp);
-                menu.findItem(R.id.menu_view_undo).setEnabled(true);
-            } else {
-                menu.findItem(R.id.menu_view_undo).setIcon(R.drawable.ic_undo_grey_48dp);
-                menu.findItem(R.id.menu_view_undo).setEnabled(false);
-            }
+            menu.findItem(R.id.menu_view_redo).setEnabled(cC.c(sc_id).f(projectFileBean.getXmlName()));
+            menu.findItem(R.id.menu_view_undo).setEnabled(cC.c(sc_id).g(projectFileBean.getXmlName()));
         }
     }
 

@@ -5,14 +5,14 @@ import java.io.File;
 import a.a.a.BuiltInLibraryManager;
 import a.a.a.ProjectBuilder;
 import a.a.a.yq;
-import mod.agus.jcoderz.lib.FileUtil;
+import pro.sketchware.utility.FileUtil;
 import mod.jbk.build.BuildProgressReceiver;
 import mod.jbk.build.BuiltInLibraries;
 
 public class KotlinCompilerBridge {
     public static void compileKotlinCodeIfPossible(BuildProgressReceiver receiver, ProjectBuilder builder) throws Throwable {
         if (KotlinCompilerUtil.areAnyKtFilesPresent(builder)) {
-            receiver.onProgress("Kotlin is compiling...");
+            receiver.onProgress("Kotlin is compiling...", 12);
             new KotlinCompiler(builder).compile();
         }
     }

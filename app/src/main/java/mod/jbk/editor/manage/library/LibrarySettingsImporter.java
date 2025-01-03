@@ -20,7 +20,7 @@ import com.airbnb.lottie.LottieAnimationView;
 import com.besome.sketch.beans.ProjectLibraryBean;
 import com.besome.sketch.editor.manage.library.ProjectComparator;
 import com.besome.sketch.lib.ui.CircleImageView;
-import com.sketchware.remod.R;
+import pro.sketchware.R;
 
 import java.io.File;
 import java.util.HashSet;
@@ -68,7 +68,6 @@ public class LibrarySettingsImporter {
         LinearLayout root = (LinearLayout) wB.a(activity, R.layout.manage_library_popup_project_selector);
         LottieAnimationView animationView = root.findViewById(R.id.animation_view);
         RecyclerView recyclerView = root.findViewById(R.id.list);
-        recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(null));
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         new Thread(() -> {
@@ -185,7 +184,7 @@ public class LibrarySettingsImporter {
             }
 
             private void selectProject(int index) {
-                if (projects.size() > 0) {
+                if (!projects.isEmpty()) {
                     for (Map<String, Object> projectMap : projects) {
                         projectMap.put("selected", false);
                     }

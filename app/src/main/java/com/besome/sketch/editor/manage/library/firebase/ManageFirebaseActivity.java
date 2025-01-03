@@ -10,12 +10,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
 
 import com.besome.sketch.beans.ProjectLibraryBean;
@@ -23,7 +24,8 @@ import com.besome.sketch.lib.base.BaseAppCompatActivity;
 import com.github.angads25.filepicker.model.DialogConfigs;
 import com.github.angads25.filepicker.model.DialogProperties;
 import com.github.angads25.filepicker.view.FilePickerDialog;
-import com.sketchware.remod.R;
+import com.google.android.material.materialswitch.MaterialSwitch;
+import pro.sketchware.R;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,9 +34,9 @@ import a.a.a.DB;
 import a.a.a.GB;
 import a.a.a.aB;
 import a.a.a.bB;
-import mod.SketchwareUtil;
-import mod.agus.jcoderz.lib.FileUtil;
 import mod.hey.studios.util.Helper;
+import pro.sketchware.utility.FileUtil;
+import pro.sketchware.utility.SketchwareUtil;
 
 public class ManageFirebaseActivity extends BaseAppCompatActivity implements View.OnClickListener {
     private final String realtime_db = "realtime_db";
@@ -49,7 +51,7 @@ public class ManageFirebaseActivity extends BaseAppCompatActivity implements Vie
         }
     });
 
-    private Switch libSwitch;
+    private MaterialSwitch libSwitch;
     private TextView tvProjectId;
     private TextView tvAppId;
     private TextView tvApiKey;
@@ -170,7 +172,7 @@ public class ManageFirebaseActivity extends BaseAppCompatActivity implements Vie
         getSupportActionBar().setTitle(Helper.getResString(R.string.design_library_firebase_title_firebase_manager));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
-        toolbar.setNavigationOnClickListener(Helper.getBackPressedClickListener(this));
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
         s = new DB(getApplicationContext(), "P1");
         firebaseLibraryBean = getIntent().getParcelableExtra("firebase");
@@ -201,17 +203,25 @@ public class ManageFirebaseActivity extends BaseAppCompatActivity implements Vie
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.manage_firebase_menu, menu);
+        menu.add(Menu.NONE, Menu.NONE, Menu.NONE, "Help").setIcon(AppCompatResources.getDrawable(this, R.drawable.ic_mtrl_help)).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        menu.add(Menu.NONE, Menu.NONE, Menu.NONE, "Config").setIcon(AppCompatResources.getDrawable(this, R.drawable.ic_mtrl_settings)).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem menuItem) {
-        int itemId = menuItem.getItemId();
-        if (itemId == R.id.menu_firebase_help) {
-            openDoc();
-        } else if (itemId == R.id.menu_firebase_settings) {
-            toFirebaseActivity();
+    public boolean onOptionsItemSelected(@NonNull MenuItem menuItem) {
+        String title = menuItem.getTitle().toString();
+        switch (title) {
+            case "Help":
+                openDoc();
+                break;
+
+            case "Config":
+                toFirebaseActivity();
+                break;
+
+            default:
+                return false;
         }
         return super.onOptionsItemSelected(menuItem);
     }
@@ -271,7 +281,7 @@ public class ManageFirebaseActivity extends BaseAppCompatActivity implements Vie
         properties.offset = Environment.getExternalStorageDirectory();
         properties.extensions = new String[]{"json"};
 
-        FilePickerDialog pickerDialog = new FilePickerDialog(this, properties);
+        FilePickerDialog pickerDialog = new FilePickerDialog(this, properties, R.style.RoundedCornersDialog);
 
         pickerDialog.setTitle("Select your google-services.json");
         pickerDialog.setDialogSelectionListener(selections -> {

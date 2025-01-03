@@ -9,7 +9,7 @@ import com.besome.sketch.beans.ImageBean;
 import com.besome.sketch.beans.LayoutBean;
 import com.besome.sketch.beans.TextBean;
 import com.besome.sketch.beans.ViewBean;
-import com.sketchware.remod.R;
+import pro.sketchware.R;
 
 public class sq {
 
@@ -90,8 +90,8 @@ public class sq {
         H = new ColorBean[]{new ColorBean("#607D8B", "BLUE GREY", "#ffffff", R.drawable.checked_white_32), new ColorBean("#ECEFF1", "BLUE GREY", "#212121", R.drawable.checked_grey_32), new ColorBean("#CFD8DC", "BLUE GREY", "#212121", R.drawable.checked_grey_32), new ColorBean("#B0BEC5", "BLUE GREY", "#212121", R.drawable.checked_grey_32), new ColorBean("#90A4AE", "BLUE GREY", "#212121", R.drawable.checked_grey_32), new ColorBean("#78909C", "BLUE GREY", "#ffffff", R.drawable.checked_white_32), new ColorBean("#607D8B", "BLUE GREY", "#ffffff", R.drawable.checked_white_32), new ColorBean("#546E7A", "BLUE GREY", "#ffffff", R.drawable.checked_white_32), new ColorBean("#455A64", "BLUE GREY", "#ffffff", R.drawable.checked_white_32), new ColorBean("#37474F", "BLUE GREY", "#ffffff", R.drawable.checked_white_32), new ColorBean("#263238", "BLUE GREY", "#ffffff", R.drawable.checked_white_32)};
         I = new ColorBean[]{new ColorBean("#000000", "BLACK", "#ffffff", R.drawable.checked_white_32)};
         J = new ColorBean[]{new ColorBean("#ffffff", "WHITE", "#212121", R.drawable.checked_grey_32)};
-        K = new ColorBean[]{new ColorBean(Color.TRANSPARENT, "TRANSPARENT", Color.parseColor("#212121"), R.drawable.checked_grey_32)};
-        L = new ColorBean[]{new ColorBean(0xffffff, "NONE", Color.parseColor("#212121"), R.drawable.checked_grey_32)};
+        K = new ColorBean[]{new ColorBean(Color.TRANSPARENT, "TRANSPARENT", Color.parseColor("#9E9E9E"), R.drawable.checked_grey_32)};
+        L = new ColorBean[]{new ColorBean(0xffffff, "NONE", Color.parseColor("#9E9E9E"), R.drawable.checked_grey_32)};
         M = new int[]{R.color.scolor_blue_01, R.color.scolor_red_02, R.color.scolor_green_02, R.color.scolor_dark_yellow_01};
     }
 
@@ -107,22 +107,22 @@ public class sq {
             }
 
             if ((horizontalGravity & Gravity.RIGHT) == Gravity.RIGHT) {
-                if (gravityValue.length() > 0) gravityValue += ", ";
+                if (!gravityValue.isEmpty()) gravityValue += ", ";
                 gravityValue += "right";
             }
         }
 
         if (verticalGravity == Gravity.CENTER_VERTICAL) {
-            if (gravityValue.length() > 0) gravityValue += ", ";
+            if (!gravityValue.isEmpty()) gravityValue += ", ";
             gravityValue += "center_vertical";
         } else {
             if ((verticalGravity & Gravity.TOP) == Gravity.TOP) {
-                if (gravityValue.length() > 0) gravityValue += ", ";
+                if (!gravityValue.isEmpty()) gravityValue += ", ";
                 gravityValue += "top";
             }
 
             if ((verticalGravity & Gravity.BOTTOM) == Gravity.BOTTOM) {
-                if (gravityValue.length() > 0) gravityValue += ", ";
+                if (!gravityValue.isEmpty()) gravityValue += ", ";
                 gravityValue += "bottom";
             }
         }
@@ -151,38 +151,18 @@ public class sq {
     }
 
     public static Pair<Integer, String>[] a(String property) {
-        switch (property) {
-            case "property_layout_width":
-            case "property_layout_height":
-                return a;
-
-            case "property_orientation":
-                return b;
-
-            case "property_text_size":
-                return o;
-
-            case "property_text_style":
-                return d;
-
-            case "property_input_type":
-                return i;
-
-            case "property_ime_option":
-                return e;
-
-            case "property_spinner_mode":
-                return f;
-
-            case "property_choice_mode":
-                return g;
-
-            case "property_first_day_of_week":
-                return h;
-
-            default:
-                return new Pair[0];
-        }
+        return switch (property) {
+            case "property_layout_width", "property_layout_height" -> a;
+            case "property_orientation" -> b;
+            case "property_text_size" -> o;
+            case "property_text_style" -> d;
+            case "property_input_type" -> i;
+            case "property_ime_option" -> e;
+            case "property_spinner_mode" -> f;
+            case "property_choice_mode" -> g;
+            case "property_first_day_of_week" -> h;
+            default -> new Pair[0];
+        };
     }
 
     public static Pair<String, String>[] b(String property) {

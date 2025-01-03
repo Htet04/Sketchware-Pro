@@ -1,31 +1,38 @@
 package dev.aldi.sayuti.block;
 
+import static mod.bobur.StringEditorActivity.convertXmlToListMap;
+import static mod.bobur.StringEditorActivity.isXmlStringsContains;
+
 import android.util.Pair;
+
+import a.a.a.Ox;
+import a.a.a.jC;
+import a.a.a.jq;
+import a.a.a.kq;
 
 import com.besome.sketch.beans.ComponentBean;
 import com.besome.sketch.beans.ProjectFileBean;
 import com.besome.sketch.beans.ViewBean;
 import com.besome.sketch.editor.LogicEditorActivity;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Set;
-
-import a.a.a.jC;
-import a.a.a.jq;
-import a.a.a.kq;
-import a.a.a.Ox;
-import mod.SketchwareUtil;
 import mod.agus.jcoderz.beans.ViewBeans;
-import mod.agus.jcoderz.lib.FileResConfig;
-import mod.elfilibustero.sketch.lib.utils.CustomVariableUtil;
-import mod.hasrat.blocks.ExtraBlocks;
-import mod.hasrat.control.logic.LogicClickListener;
 import mod.hey.studios.editor.view.IdGenerator;
 import mod.hey.studios.moreblock.ReturnMoreblockManager;
 import mod.hilal.saif.activities.tools.ConfigActivity;
 import mod.hilal.saif.blocks.BlocksHandler;
+import mod.pranav.viewbinding.ViewBindingBuilder;
+
+import pro.sketchware.blocks.ExtraBlocks;
+import pro.sketchware.control.logic.LogicClickListener;
+import pro.sketchware.utility.CustomVariableUtil;
+import pro.sketchware.utility.FileResConfig;
+import pro.sketchware.utility.FileUtil;
+import pro.sketchware.utility.SketchwareUtil;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
 public class ExtraPaletteBlock {
 
@@ -40,8 +47,9 @@ public class ExtraPaletteBlock {
     private final HashMap<String, Object> mapSave = new HashMap<>();
     private final ProjectFileBean projectFile;
     public LogicEditorActivity logicEditor;
+    private final Boolean isViewBindingEnabled;
 
-    public ExtraPaletteBlock(LogicEditorActivity logicEditorActivity) {
+    public ExtraPaletteBlock(LogicEditorActivity logicEditorActivity, Boolean isViewBindingEnabled) {
         logicEditor = logicEditorActivity;
         eventName = logicEditorActivity.D;
 
@@ -49,6 +57,7 @@ public class ExtraPaletteBlock {
         javaName = projectFile.getJavaName();
         xmlName = projectFile.getXmlName();
         sc_id = logicEditor.B;
+        this.isViewBindingEnabled = isViewBindingEnabled;
 
         frc = new FileResConfig(sc_id);
         extraBlocks = new ExtraBlocks(logicEditor);
@@ -76,7 +85,7 @@ public class ExtraPaletteBlock {
                 view = eC.c("_drawer_" + xmlName, logicEditor.C);
             }
             String customView = view.customView;
-            if (customView != null && customView.length() > 0) {
+            if (customView != null && !customView.isEmpty()) {
                 for (ViewBean viewBean : jC.a(sc_id).d(ProjectFileBean.getXmlName(customView))) {
                     if (viewBean.getClassInfo().a(str)) {
                         mapSave.put(str, true);
@@ -250,7 +259,7 @@ public class ExtraPaletteBlock {
                 viewBean = eC.c("_drawer_" + xmlName, viewId);
             }
             String viewBeanCustomView = viewBean.customView;
-            if (viewBeanCustomView != null && viewBeanCustomView.length() > 0) {
+            if (viewBeanCustomView != null && !viewBeanCustomView.isEmpty()) {
                 ArrayList<ViewBean> customViews = jC.a(sc_id).d(ProjectFileBean.getXmlName(viewBeanCustomView));
                 for (int i = 0, customViewsSize = customViews.size(); i < customViewsSize; i++) {
                     ViewBean customView = customViews.get(i);
@@ -261,7 +270,7 @@ public class ExtraPaletteBlock {
 
                     if (!customView.convert.equals("include")) {
                         String typeName = customView.convert.isEmpty() ? ViewBean.getViewTypeName(customView.type) : IdGenerator.getLastPath(customView.convert);
-                        logicEditor.a(customView.id, "v", typeName, "getVar").setTag(customView.id);
+                        logicEditor.a(customView.id, "v", typeName, "getVar").setTag(isViewBindingEnabled ? "binding." + ViewBindingBuilder.generateParameterFromId(customView.id) : customView.id);
                     }
                 }
             }
@@ -284,7 +293,7 @@ public class ExtraPaletteBlock {
             if (!view.convert.equals("include")) {
                 if (!toNotAdd.contains("android:id")) {
                     String typeName = view.convert.isEmpty() ? ViewBean.getViewTypeName(view.type) : IdGenerator.getLastPath(view.convert);
-                    logicEditor.a(view.id, "v", typeName, "getVar").setTag(view.id);
+                    logicEditor.a(isViewBindingEnabled ? "binding." + ViewBindingBuilder.generateParameterFromId(view.id) : view.id, "v", typeName, "getVar").setTag(isViewBindingEnabled ? "binding." + ViewBindingBuilder.generateParameterFromId(view.id) : view.id);
                 }
             }
         }
@@ -304,7 +313,7 @@ public class ExtraPaletteBlock {
                     if (!drawerView.convert.equals("include")) {
                         String id = "_drawer_" + drawerView.id;
                         String typeName = drawerView.convert.isEmpty() ? ViewBean.getViewTypeName(drawerView.type) : IdGenerator.getLastPath(drawerView.convert);
-                        logicEditor.a(id, "v", typeName, "getVar").setTag(id);
+                        logicEditor.a(isViewBindingEnabled ? "binding.drawer." + ViewBindingBuilder.generateParameterFromId(id) : id, "v", typeName, "getVar").setTag(id);
                     }
                 }
             }
@@ -389,6 +398,27 @@ public class ExtraPaletteBlock {
         }
 
         switch (paletteId) {
+            case -1:
+                String filePath = FileUtil.getExternalStorageDir().concat("/.sketchware/data/").concat(sc_id.concat("/files/resource/values/strings.xml"));
+                ArrayList<HashMap<String, Object>> StringsListMap = new ArrayList<>();
+                convertXmlToListMap(FileUtil.readFileIfExist(filePath), StringsListMap);
+
+
+                logicEditor.b("Add new String", "XmlString.Add");
+                logicEditor.b("Remove String(s)", "XmlString.remove");
+                logicEditor.b("Open String editor", "openStringEditor");
+
+                logicEditor.a("s", "getResString");
+                logicEditor.a("Saved Res Strings :", 0xff555555);
+                if (!isXmlStringsContains(StringsListMap, "app_name")) {
+                    logicEditor.a("app_name", "s", "getResStr").setTag("S98ZCSapp_name");
+                }
+
+                for (int i = 0; i < StringsListMap.size(); i++) {
+                    String key = StringsListMap.get(i).get("key").toString();
+                    logicEditor.a(key, "s", "getResStr").setTag("S98ZCS" + key);
+                }
+                return;
             case 0:
                 logicEditor.b("Add variable", "variableAdd");
                 logicEditor.b("Add custom variable", "variableAddNew", clickListener);
@@ -441,7 +471,7 @@ public class ExtraPaletteBlock {
             case 5:
                 extraBlocks.fileBlocks();
                 logicEditor.a("FileUtil Blocks", 0xff555555);
-                if (frc.getAssetsFile().size() > 0) {
+                if (!frc.getAssetsFile().isEmpty()) {
                     logicEditor.a(" ", "getAssetFile");
                     logicEditor.a("s", "copyAssetFile");
                 }
@@ -938,11 +968,11 @@ public class ExtraPaletteBlock {
                     logicEditor.a(" ", "startActivity");
                     logicEditor.a(" ", "startActivityWithChooser");
                 }
-                if (frc.getBroadcastFile().size() > 0) {
+                if (!frc.getBroadcastFile().isEmpty()) {
                     logicEditor.a("Broadcast", 0xff555555);
                     logicEditor.a(" ", "sendBroadcast");
                 }
-                if (frc.getServiceFile().size() > 0) {
+                if (!frc.getServiceFile().isEmpty()) {
                     logicEditor.a("Service", 0xff555555);
                     logicEditor.a(" ", "startService");
                     logicEditor.a(" ", "stopService");
@@ -1160,7 +1190,7 @@ public class ExtraPaletteBlock {
                 if (ConfigActivity.isSettingEnabled(ConfigActivity.SETTING_SHOW_BUILT_IN_BLOCKS)) {
                     logicEditor.a("Command Blocks", 0xff555555);
                     logicEditor.a("c", "CommandBlockJava");
-                    logicEditor.a("c", "CommandBlockXML");
+                    logicEditor.addDeprecatedBlock("Deprecated: Use XML Command Manager", "c", "CommandBlockXML");
                     logicEditor.a("Permission Command Blocks", 0xff555555);
                     logicEditor.a(" ", "addPermission");
                     logicEditor.a(" ", "removePermission");

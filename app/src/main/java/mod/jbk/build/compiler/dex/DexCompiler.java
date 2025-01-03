@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 
 import a.a.a.ProjectBuilder;
-import mod.agus.jcoderz.lib.FileUtil;
+import pro.sketchware.utility.FileUtil;
 import mod.hey.studios.project.ProjectSettings;
 
 public class DexCompiler {
@@ -28,7 +28,7 @@ public class DexCompiler {
             minApiLevel = Integer.parseInt(builder.settings.getValue(
                     ProjectSettings.SETTING_MINIMUM_SDK_VERSION, "21"));
         } catch (NumberFormatException e) {
-            throw new CompilationFailedException("Invalid minSdkVersion specified in Project Settings", e);
+            throw new CompilationFailedException("Invalid minSdkVersion specified in Project Settings" + e.getMessage());
         }
 
         if (!(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)) {

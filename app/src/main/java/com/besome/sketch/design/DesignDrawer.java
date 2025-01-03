@@ -2,204 +2,212 @@ package com.besome.sketch.design;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.sketchware.remod.R;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.google.android.material.card.MaterialCardView;
+import pro.sketchware.R;
+import pro.sketchware.databinding.DesignDrawerBinding;
+import pro.sketchware.databinding.DesignDrawerItemBinding;
 
 import a.a.a.mB;
 import a.a.a.wB;
+import dev.chrisbanes.insetter.Insetter;
+import dev.chrisbanes.insetter.Side;
 import mod.hey.studios.util.Helper;
 
 public class DesignDrawer extends LinearLayout implements View.OnClickListener {
-
-    private Context context;
+    private DesignDrawerBinding binding;
 
     public DesignDrawer(Context context) {
-        super(context);
+        this(context, null);
+    }
+
+    public DesignDrawer(Context context, AttributeSet attrs) {
+        super(context, attrs);
         initialize(context);
     }
 
-    public DesignDrawer(Context context, AttributeSet attributeSet) {
-        super(context, attributeSet);
-        initialize(context);
-    }
-
-    private DrawerItem addDrawerItem(int tag, boolean useSeparator, int iconResId, int titleResId, int descriptionResId) {
-        DrawerItem drawerItem = new DrawerItem(context, tag);
-        drawerItem.setContent(iconResId, Helper.getResString(titleResId), Helper.getResString(descriptionResId));
-        drawerItem.setTag(tag);
-        drawerItem.setOnClickListener(this);
-        drawerItem.setSeparatorVisibility(useSeparator);
-        drawerItem.setSubSeparatorVisibility(!useSeparator);
+    private DrawerItem addDrawerItem(int tag, int iconResId, int titleResId, int descriptionResId) {
+        DrawerItem drawerItem = new DrawerItem(getContext());
+        drawerItem.setContent(iconResId, Helper.getResString(drawerItem, titleResId), Helper.getResString(drawerItem, descriptionResId));
+        drawerItem.setOnClickListener(tag, this);
         return drawerItem;
     }
 
+    private void addLayoutMenu(int tag, int iconResId, int titleResId, int descriptionResId) {
+        View drawerItem = addDrawerItem(tag, iconResId, titleResId, descriptionResId);
+        binding.layoutMenus.addView(drawerItem);
+    }
+
+    private void applyDrawerLayoutInsets() {
+        var layoutDirection = getResources().getConfiguration().getLayoutDirection();
+        Insetter.builder()
+                .padding(WindowInsetsCompat.Type.navigationBars(),
+                        Side.create(layoutDirection == LAYOUT_DIRECTION_RTL, false,
+                                layoutDirection == LAYOUT_DIRECTION_LTR, false))
+                .applyToView(binding.layoutDrawer);
+    }
+
+    private void applyTitleInsets() {
+        Insetter.builder()
+                .margin(WindowInsetsCompat.Type.statusBars())
+                .applyToView(binding.tvTitleConfiguration);
+    }
+
+    private void applyBottomMenuInsets() {
+        Insetter.builder()
+                .margin(WindowInsetsCompat.Type.navigationBars(), Side.BOTTOM)
+                .applyToView(binding.layoutBottomMenus);
+    }
+
     private void initialize(Context context) {
-        this.context = context;
-        wB.a(context, this, R.layout.design_drawer);
-        TextView tv_title_configuration = findViewById(R.id.tv_title_configuration);
-        tv_title_configuration.setText(Helper.getResString(R.string.design_drawer_menu_title));
-        ((TextView) findViewById(R.id.tv_title_global)).setText(Helper.getResString(R.string.design_drawer_menu_bottom_title));
-        LinearLayout menusLayout = findViewById(R.id.layout_menus);
-        LinearLayout bottomMenusLayout = findViewById(R.id.layout_bottom_menus);
-        /* Add collection item */
-        bottomMenusLayout.addView(addDrawerItem(1, false,
-                R.drawable.ic_bookmark_red_48dp, R.string.design_drawer_menu_title_collection, R.string.design_drawer_menu_description_collection
-        ));
-        /* Add built-in Library Manager (AppCompat, Firebase, AdMob, Google Maps SDK) */
-        /* INCLUDES SECTION SEPARATOR */
-        menusLayout.addView(addDrawerItem(3, true,
-                R.drawable.categorize_48, R.string.design_drawer_menu_title_library, R.string.design_drawer_menu_description_library
-        ));
-        /* Add View Manager */
-        menusLayout.addView(addDrawerItem(4, false,
-                R.drawable.multiple_devices_48, R.string.design_drawer_menu_title_view, R.string.design_drawer_menu_description_view
-        ));
-        /* Add Image Manager */
-        menusLayout.addView(addDrawerItem(5, false,
-                R.drawable.ic_picture_48dp, R.string.design_drawer_menu_title_image, R.string.design_drawer_menu_description_image
-        ));
-        /* Add Sound Manager */
-        menusLayout.addView(addDrawerItem(6, false,
-                R.drawable.ic_sound_wave_48dp, R.string.design_drawer_menu_title_sound, R.string.design_drawer_menu_description_sound
-        ));
-        /* Add Font Manager */
-        menusLayout.addView(addDrawerItem(7, false,
-                R.drawable.ic_font_48dp, R.string.design_drawer_menu_title_font, R.string.design_drawer_menu_description_font
-        ));
-        /* Add Java Manager */
-        menusLayout.addView(addDrawerItem(8, false,
-                R.drawable.java_96, R.string.text_title_menu_java, R.string.text_subtitle_menu_java
-        ));
-        /* Add Resource Manager */
-        menusLayout.addView(addDrawerItem(9, false,
-                R.drawable.file_app_icon, R.string.text_title_menu_resource, R.string.text_subtitle_menu_resource
-        ));
-        /* Add Asset Manager */
-        menusLayout.addView(addDrawerItem(10, false,
-                R.drawable.file_48_blue, R.string.text_title_menu_assets, R.string.text_subtitle_menu_assets
-        ));
-        /* Add Permission Manager */
-        menusLayout.addView(addDrawerItem(11, false,
-                R.drawable.plugin_purple_96, R.string.text_title_menu_permission, R.string.text_subtitle_menu_permission
-        ));
-        /* Add AppCompat Injection Manager */
-        menusLayout.addView(addDrawerItem(12, false,
-                R.drawable.ic_property_inject, R.string.design_drawer_menu_injection, R.string.design_drawer_menu_injection_subtitle
-        ));
-        /* Add AndroidManifest Manager */
-        menusLayout.addView(addDrawerItem(13, false,
-                R.drawable.icon8_code_am, R.string.design_drawer_menu_androidmanifest, R.string.design_drawer_menu_androidmanifest_subtitle
-        ));
-        /* Add Used Custom Blocks */
-        menusLayout.addView(addDrawerItem(20, false,
-                R.drawable.block_96_blue, R.string.design_drawer_menu_customblocks, R.string.design_drawer_menu_customblocks_subtitle
-        ));
-        /* Add Local library Manager */
-        menusLayout.addView(addDrawerItem(14, false,
-                R.drawable.open_box_48, R.string.text_title_menu_local_library, R.string.text_subtitle_menu_local_library
-        ));
-        /* Add Native library Manager */
-        menusLayout.addView(addDrawerItem(19, false,
-                R.drawable.cpp, R.string.design_drawer_menu_nativelibs, R.string.design_drawer_menu_nativelibs_subtitle));
-        /* Add ProGuard Manager */
-        menusLayout.addView(addDrawerItem(17, false,
-                R.drawable.connected_96, R.string.design_drawer_menu_proguard, R.string.design_drawer_menu_proguard_subtitle));
-        /* Add StringFog Manager */
-        /* INCLUDES SECTION SEPARATOR */
-        menusLayout.addView(addDrawerItem(18, true,
-                R.drawable.color_lock_96, R.string.design_drawer_menu_stringfog, R.string.design_drawer_menu_stringfog_subtitle));
-        /* Add Source Code Viewer */
-        menusLayout.addView(addDrawerItem(16, false,
-                R.drawable.code_icon, R.string.design_drawer_menu_title_source_code, R.string.design_drawer_menu_description_source_code));
-        /* Add Logcat Reader */
-        menusLayout.addView(addDrawerItem(22,false,
-                R.drawable.icons8_app_components,R.string.design_drawer_menu_title_logcat_reader,R.string.design_drawer_menu_subtitle_logcat_reader));
+        LayoutInflater inflater = LayoutInflater.from(context);
+        binding = DesignDrawerBinding.inflate(inflater, this, true);
+
+        applyDrawerLayoutInsets();
+        applyTitleInsets();
+        applyBottomMenuInsets();
+
+        binding.tvTitleConfiguration.setText(Helper.getResString(binding.tvTitleConfiguration, R.string.design_drawer_menu_title));
+        binding.tvTitleGlobal.setText(Helper.getResString(binding.tvTitleGlobal, R.string.design_drawer_menu_bottom_title));
+
+        binding.layoutBottomMenus.addView(
+            addDrawerItem(1, R.drawable.ic_mtrl_bookmark, R.string.design_drawer_menu_title_collection,
+                R.string.design_drawer_menu_description_collection));
+
+        addLayoutMenu(3, R.drawable.ic_mtrl_category, R.string.design_drawer_menu_title_library,
+            R.string.design_drawer_menu_description_library);
+
+        addLayoutMenu(4, R.drawable.ic_mtrl_devices, R.string.design_drawer_menu_title_view,
+            R.string.design_drawer_menu_description_view);
+
+        addLayoutMenu(5, R.drawable.ic_mtrl_image, R.string.design_drawer_menu_title_image,
+            R.string.design_drawer_menu_description_image);
+
+        addLayoutMenu(6, R.drawable.ic_mtrl_music, R.string.design_drawer_menu_title_sound,
+            R.string.design_drawer_menu_description_sound);
+
+        addLayoutMenu(7, R.drawable.ic_mtrl_font, R.string.design_drawer_menu_title_font,
+            R.string.design_drawer_menu_description_font);
+
+        addLayoutMenu(8, R.drawable.ic_mtrl_java, R.string.text_title_menu_java,
+            R.string.text_subtitle_menu_java);
+
+        addLayoutMenu(9, R.drawable.ic_mtrl_folder_code, R.string.text_title_menu_resource,
+            R.string.text_subtitle_menu_resource);
+
+        addLayoutMenu(10, R.drawable.ic_mtrl_file_present, R.string.text_title_menu_assets,
+            R.string.text_subtitle_menu_assets);
+
+        addLayoutMenu(11, R.drawable.ic_mtrl_shield_check, R.string.text_title_menu_permission,
+            R.string.text_subtitle_menu_permission);
+
+        addLayoutMenu(12, R.drawable.ic_mtrl_inject, R.string.design_drawer_menu_injection,
+            R.string.design_drawer_menu_injection_subtitle);
+
+        addLayoutMenu(13, R.drawable.ic_mtrl_deployed_code, R.string.design_drawer_menu_androidmanifest,
+            R.string.design_drawer_menu_androidmanifest_subtitle);
+
+        addLayoutMenu(20, R.drawable.ic_mtrl_block, R.string.design_drawer_menu_customblocks,
+            R.string.design_drawer_menu_customblocks_subtitle);
+
+        addLayoutMenu(17, R.drawable.ic_mtrl_shield_lock, R.string.design_drawer_menu_proguard,
+            R.string.design_drawer_menu_proguard_subtitle);
+
+        addLayoutMenu(18, R.drawable.ic_mtrl_regular_expression, R.string.design_drawer_menu_stringfog,
+            R.string.design_drawer_menu_stringfog_subtitle);
+
+        addLayoutMenu(16, R.drawable.ic_mtrl_frame_source, R.string.design_drawer_menu_title_source_code,
+            R.string.design_drawer_menu_description_source_code);
+
+        addLayoutMenu(14, R.drawable.ic_mtrl_code, R.string.design_drawer_menu_title_xml_command,
+            R.string.design_drawer_menu_description_xml_command);
+
+        addLayoutMenu(22, R.drawable.ic_mtrl_article, R.string.design_drawer_menu_title_logcat_reader,
+            R.string.design_drawer_menu_subtitle_logcat_reader);
     }
 
     @Override
-    public void onClick(View view) {
+    public void onClick(View v) {
         if (!mB.a()) {
-            if (context instanceof DesignActivity) {
-                DesignActivity designActivity = (DesignActivity) context;
-                switch ((Integer) view.getTag()) {
+            if (getContext() instanceof DesignActivity activity) {
+                switch ((Integer) v.getTag()) {
                     case 1:
-                        designActivity.toCollectionManager();
+                        activity.toCollectionManager();
                         return;
 
                     case 3:
-                        designActivity.toLibraryManager();
+                        activity.toLibraryManager();
                         return;
 
                     case 4:
-                        designActivity.toViewManager();
+                        activity.toViewManager();
                         return;
 
                     case 5:
-                        designActivity.toImageManager();
+                        activity.toImageManager();
                         return;
 
                     case 6:
-                        designActivity.toSoundManager();
+                        activity.toSoundManager();
                         return;
 
                     case 7:
-                        designActivity.toFontManager();
+                        activity.toFontManager();
                         return;
 
                     case 8:
-                        designActivity.toJavaManager();
+                        activity.toJavaManager();
                         return;
 
                     case 9:
-                        designActivity.toResourceManager();
+                        activity.toResourceManager();
                         return;
 
                     case 10:
-                        designActivity.toAssetManager();
+                        activity.toAssetManager();
                         return;
 
                     case 11:
-                        designActivity.toPermissionManager();
+                        activity.toPermissionManager();
                         return;
 
                     case 12:
-                        designActivity.toAppCompatInjectionManager();
+                        activity.toAppCompatInjectionManager();
                         return;
 
                     case 13:
-                        designActivity.toAndroidManifestManager();
+                        activity.toAndroidManifestManager();
                         return;
 
                     case 14:
-                        designActivity.toLocalLibraryManager();
+                        activity.toXMLCommandManager();
                         return;
 
                     case 16:
-                        designActivity.toSourceCodeViewer();
+                        activity.toSourceCodeViewer();
                         return;
 
                     case 17:
-                        designActivity.toProguardManager();
+                        activity.toProguardManager();
                         return;
 
                     case 18:
-                        designActivity.toStringFogManager();
-                        return;
-
-                    case 19:
-                        designActivity.toNativeLibraryManager();
+                        activity.toStringFogManager();
                         return;
 
                     case 20:
-                        designActivity.toCustomBlocksViewer();
+                        activity.toCustomBlocksViewer();
                         return;
 
                     case 22:
-                        designActivity.toLogReader();
+                        activity.toLogReader();
                         return;
                     case 2:
                     default:
@@ -208,50 +216,28 @@ public class DesignDrawer extends LinearLayout implements View.OnClickListener {
         }
     }
 
-    static class DrawerItem extends LinearLayout {
-
-        private ImageView imgIcon;
-        private TextView titleTextView;
-        private TextView subTitleTextView;
-        private View subSeparator;
-        private View separator;
+    private static class DrawerItem extends LinearLayout {
+        private final DesignDrawerItemBinding binding;
 
         public DrawerItem(Context context) {
-            super(context);
-            new DrawerItem(context, 0);
+            this(context, null);
         }
 
-        public DrawerItem(Context context, AttributeSet set) {
-            super(context, set);
-            new DrawerItem(context, 0);
-        }
-
-        public DrawerItem(Context context, int tag) {
-            super(context);
-            initialize(context, tag);
+        public DrawerItem(Context context, AttributeSet attrs) {
+            super(context, attrs);
+            LayoutInflater inflater = LayoutInflater.from(context);
+            binding = DesignDrawerItemBinding.inflate(inflater, this, true);
         }
 
         public void setContent(int iconResId, String rootTitleText, String subTitleText) {
-            imgIcon.setImageResource(iconResId);
-            titleTextView.setText(rootTitleText);
-            subTitleTextView.setText(subTitleText);
+            binding.imgIcon.setImageResource(iconResId);
+            binding.tvRootTitle.setText(rootTitleText);
+            binding.tvSubTitle.setText(subTitleText);
         }
 
-        public final void initialize(Context context, int tag) {
-            wB.a(context, this, R.layout.design_drawer_item);
-            imgIcon = findViewById(R.id.img_icon);
-            titleTextView = findViewById(R.id.tv_root_title);
-            subTitleTextView = findViewById(R.id.tv_sub_title);
-            subSeparator = findViewById(R.id.sub_separator);
-            separator = findViewById(R.id.separator);
-        }
-
-        public void setSeparatorVisibility(boolean visible) {
-            separator.setVisibility(visible ? VISIBLE : GONE);
-        }
-
-        public void setSubSeparatorVisibility(boolean visible) {
-            subSeparator.setVisibility(visible ? VISIBLE : GONE);
+        public void setOnClickListener(int tag, OnClickListener listener) {
+            binding.getRoot().setTag(tag);
+            binding.getRoot().setOnClickListener(listener);
         }
     }
 }

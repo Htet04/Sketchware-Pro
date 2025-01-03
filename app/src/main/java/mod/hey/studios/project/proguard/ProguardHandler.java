@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import a.a.a.ProjectBuilder;
-import mod.agus.jcoderz.lib.FileUtil;
+import pro.sketchware.utility.FileUtil;
 import mod.hey.studios.util.Helper;
 import mod.jbk.build.BuildProgressReceiver;
 
@@ -241,10 +241,10 @@ public class ProguardHandler {
     public void start(BuildProgressReceiver progressReceiver, ProjectBuilder builder) throws IOException {
         if (isShrinkingEnabled()) {
             if (isR8Enabled()) {
-                progressReceiver.onProgress("Running R8 on classes...");
+                progressReceiver.onProgress("Running R8 on classes...", 15);
                 builder.runR8();
             } else {
-                progressReceiver.onProgress("ProGuarding classes...");
+                progressReceiver.onProgress("ProGuarding classes...", 16);
                 builder.runProguard();
             }
         }

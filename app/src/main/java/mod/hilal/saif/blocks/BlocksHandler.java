@@ -6,9 +6,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import dev.aldi.sayuti.block.ExtraBlockFile;
-import mod.agus.jcoderz.lib.FileUtil;
-import mod.hasrat.blocks.ExtraBlocks;
 import mod.hilal.saif.activities.tools.ConfigActivity;
+import pro.sketchware.blocks.ExtraBlocks;
+import pro.sketchware.utility.FileUtil;
 
 public class BlocksHandler {
 
@@ -1367,7 +1367,7 @@ public class BlocksHandler {
         hashMap.put("code", "%s.setAnimation(%s);");
         hashMap.put("color", "#4A6CD4");
         hashMap.put("palette", "-1");
-        hashMap.put("spec", "%m.lottie settAnimationFromAsset %s");
+        hashMap.put("spec", "%m.lottie setAnimationFromAsset %s");
         arrayList.add(hashMap);
 
         hashMap = new HashMap<>();
@@ -1880,7 +1880,7 @@ public class BlocksHandler {
         hashMap.put("code", "getLifecycle().addObserver(%1$s);");
         hashMap.put("color", "#4A6CD4");
         hashMap.put("palette", "-1");
-        hashMap.put("spec", "%m.youtubeview geLifecycle");
+        hashMap.put("spec", "%m.youtubeview getLifecycle");
         arrayList.add(hashMap);
 
         hashMap = new HashMap<>();
@@ -2406,14 +2406,15 @@ public class BlocksHandler {
         hashMap.put("palette", "-1");
         hashMap.put("spec", "%m.videoad register fullscreen content callbacks (This Block isn't needed anymore, please remove it)");
         arrayList.add(hashMap);
-    }
 
-    private static void checkDir() {
-        String extraBlocksPath = ExtraBlockFile.EXTRA_MENU_BLOCK_FILE.getAbsolutePath();
-
-        if (!ExtraBlockFile.EXTRA_BLOCKS_DATA_FILE.exists() || FileUtil.readFile(extraBlocksPath).equals("")) {
-            FileUtil.writeFile(extraBlocksPath, "[]");
-        }
+        hashMap = new HashMap<>();
+        hashMap.put("name", "getResString");
+        hashMap.put("type", "s");
+        hashMap.put("code", "getString(%s)");
+        hashMap.put("color", "#7c83db");
+        hashMap.put("palette", "-1");
+        hashMap.put("spec", "get String from %m.ResString");
+        arrayList.add(hashMap);
     }
 
     private static boolean showAll() {
@@ -2427,9 +2428,6 @@ public class BlocksHandler {
     }
 
     public static void primaryBlocksA(LogicEditorActivity logicEditorActivity, boolean isBoolUsed, boolean isIntUsed, boolean isStrUsed, boolean isMapUsed) {
-        if (showBuiltIn()) {
-            checkDir();
-        }
         logicEditorActivity.a("Blocks", 0xff555555);
         if (showAll() || isBoolUsed) {
             logicEditorActivity.a(" ", "setVarBoolean");
@@ -2482,9 +2480,6 @@ public class BlocksHandler {
         String eventName = logicEditorActivity.D;
         boolean inOnBindCustomViewEvent = eventName.equals("onBindCustomView");
         boolean inOnFilesPickedEvent = eventName.equals("onFilesPicked");
-        if (showBuiltIn()) {
-            checkDir();
-        }
         if (showAll() || isListNumUsed) {
             logicEditorActivity.a("List Number", 0xff555555);
             logicEditorActivity.a("b", "containListInt");
@@ -2547,9 +2542,6 @@ public class BlocksHandler {
     }
 
     public static void primaryBlocksC(LogicEditorActivity logicEditorActivity) {
-        if (showBuiltIn()) {
-            checkDir();
-        }
         logicEditorActivity.a("c", "repeat");
         if (showBuiltIn()) {
             logicEditorActivity.a("c", "repeatKnownNum");
@@ -2587,9 +2579,6 @@ public class BlocksHandler {
     }
 
     public static void primaryBlocksD(LogicEditorActivity logicEditorActivity) {
-        if (showBuiltIn()) {
-            checkDir();
-        }
         logicEditorActivity.a("b", "true");
         logicEditorActivity.a("b", "false");
         logicEditorActivity.a("b", "<");

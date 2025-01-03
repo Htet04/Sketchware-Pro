@@ -172,6 +172,18 @@ public class jq {
     public boolean isHttp3Used = false;
 
     /**
+     * If at least 1 TextToSpeech Component ({@link com.besome.sketch.beans.ComponentBean#COMPONENT_TYPE_TEXT_TO_SPEECH})
+     * is used in the project.
+     */
+    public boolean isTextToSpeechUsed = false;
+
+    /**
+     * If at least 1 SpeechToText Component ({@link com.besome.sketch.beans.ComponentBean#COMPONENT_TYPE_SPEECH_TO_TEXT})
+     * is used in the project.
+     */
+    public boolean isSpeechToTextUsed = false;
+
+    /**
      * Permissions of the whole project, stored as bitfield.
      */
     public int q = 0;
@@ -298,20 +310,17 @@ public class jq {
         /**
          * True if Activity contains a Drawer.
          */
-        public boolean a = false;
+        public boolean hasDrawer = false;
 
         /**
          * True if Activity uses Firebase Auth.
          */
-        public boolean b = false;
+        public boolean usesFirebaseAuth = false;
 
         /**
          * The permissions bitfield.
          */
         public int c = 0;
-
-        public a() {
-        }
 
         public void a(int i) {
             c = i | c;

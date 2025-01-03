@@ -21,11 +21,12 @@ import com.android.sdklib.build.ApkBuilder;
 import com.android.sdklib.build.ApkCreationException;
 import com.android.sdklib.build.DuplicateFileException;
 import com.android.sdklib.build.SealedApkException;
-import com.besome.sketch.SketchApplication;
 import com.github.megatronking.stringfog.plugin.StringFogClassInjector;
 import com.github.megatronking.stringfog.plugin.StringFogMappingPrinter;
 import com.iyxan23.zipalignjava.InvalidZipException;
 import com.iyxan23.zipalignjava.ZipAlign;
+
+import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,8 +45,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import mod.SketchwareUtil;
 import mod.agus.jcoderz.dex.Dex;
 import mod.agus.jcoderz.dex.FieldId;
 import mod.agus.jcoderz.dex.MethodId;
@@ -56,8 +57,6 @@ import mod.agus.jcoderz.dx.merge.CollisionPolicy;
 import mod.agus.jcoderz.dx.merge.DexMerger;
 import mod.agus.jcoderz.editor.library.ExtLibSelected;
 import mod.agus.jcoderz.editor.manage.library.locallibrary.ManageLocalLibrary;
-import mod.agus.jcoderz.lib.FilePathUtil;
-import mod.agus.jcoderz.lib.FileUtil;
 import mod.hey.studios.build.BuildSettings;
 import mod.hey.studios.compiler.kotlin.KotlinCompilerBridge;
 import mod.hey.studios.project.ProjectSettings;
@@ -71,6 +70,11 @@ import mod.jbk.util.LogUtil;
 import mod.jbk.util.TestkeySignBridge;
 import mod.pranav.build.JarBuilder;
 import mod.pranav.build.R8Compiler;
+import mod.pranav.viewbinding.ViewBindingBuilder;
+import pro.sketchware.SketchApplication;
+import pro.sketchware.utility.FilePathUtil;
+import pro.sketchware.utility.FileUtil;
+import pro.sketchware.utility.SketchwareUtil;
 import proguard.Configuration;
 import proguard.ConfigurationParser;
 import proguard.ParseException;
@@ -153,6 +157,23 @@ public class ProjectBuilder {
                 progressReceiver);
         compiler.compile();
         LogUtil.d(TAG, "Compiling resources took " + (System.currentTimeMillis() - timestampResourceCompilationStarted) + " ms");
+    }
+
+    public void generateViewBinding() throws IOException, SAXException {
+        if (settings.getValue(ProjectSettings.SETTING_ENABLE_VIEWBINDING, ProjectSettings.SETTING_GENERIC_VALUE_FALSE)
+                .equals(ProjectSettings.SETTING_GENERIC_VALUE_FALSE)) {
+            return;
+        }
+        File outputDirectory = new File(yq.javaFilesPath + File.separator + yq.packageName.replace(".", File.separator) + File.separator + "databinding");
+        outputDirectory.mkdirs();
+
+        List<File> layouts = FileUtil.listFiles(yq.layoutFilesPath, "xml").stream()
+                .map(File::new)
+                .collect(Collectors.toList());
+
+        ViewBindingBuilder builder = new ViewBindingBuilder(layouts, outputDirectory, yq.packageName);
+
+        builder.generateBindings();
     }
 
     /**
@@ -285,7 +306,7 @@ public class ProjectBuilder {
         classpath.append(mll.getJarLocalLibrary());
 
         /* Append user's custom classpath */
-        if (!build_settings.getValue(BuildSettings.SETTING_CLASSPATH, "").equals("")) {
+        if (!build_settings.getValue(BuildSettings.SETTING_CLASSPATH, "").isEmpty()) {
             classpath.append(":").append(build_settings.getValue(BuildSettings.SETTING_CLASSPATH, ""));
         }
 
@@ -307,9 +328,7 @@ public class ProjectBuilder {
             Object nameObject = localLibrary.get("name");
             Object jarPathObject = localLibrary.get("jarPath");
 
-            if (nameObject instanceof String && jarPathObject instanceof String) {
-                String name = (String) nameObject;
-                String jarPath = (String) jarPathObject;
+            if (nameObject instanceof String name && jarPathObject instanceof String jarPath) {
 
                 if (localLibrary.containsKey("jarPath") && proguard.libIsProguardFMEnabled(name)) {
                     localLibraryJarsWithFullModeOn.add(jarPath);
@@ -460,7 +479,7 @@ public class ProjectBuilder {
                 lastDexNumber++;
             }
         }
-        if (dexObjects.size() > 0) {
+        if (!dexObjects.isEmpty()) {
             File file = new File(outputDirectory, lastDexNumber == 1 ? "classes.dex" : "classes" + lastDexNumber + ".dex");
             mergeDexes(file, dexObjects);
             resultDexFiles.add(file);
@@ -484,10 +503,8 @@ public class ProjectBuilder {
 
     /**
      * Run Eclipse Compiler to compile Java files.
-     *
-     * @throws Throwable Thrown when Eclipse had problems compiling
      */
-    public void compileJavaCode() throws Throwable {
+    public void compileJavaCode() throws zy, IOException {
         long savedTimeMillis = System.currentTimeMillis();
 
         class EclipseOutOutputStream extends OutputStream {
@@ -934,14 +951,16 @@ public class ProjectBuilder {
         LogUtil.d(TAG, "About to run ProGuard with these arguments: " + args);
 
         Configuration configuration = new Configuration();
-        ConfigurationParser parser = new ConfigurationParser(args.toArray(new String[0]), System.getProperties());
 
         try {
-            parser.parse(configuration);
+            ConfigurationParser parser = new ConfigurationParser(args.toArray(new String[0]), System.getProperties());
+            try {
+                parser.parse(configuration);
+            } finally {
+                parser.close();
+            }
         } catch (ParseException e) {
             throw new IOException(e);
-        } finally {
-            parser.close();
         }
 
         try {

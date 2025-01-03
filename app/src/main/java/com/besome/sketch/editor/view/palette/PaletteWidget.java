@@ -1,6 +1,6 @@
 package com.besome.sketch.editor.view.palette;
 
-import static mod.SketchwareUtil.dpToPx;
+import static pro.sketchware.utility.SketchwareUtil.dpToPx;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -11,7 +11,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.besome.sketch.lib.ui.CustomScrollView;
-import com.sketchware.remod.R;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.color.MaterialColors;
+
+import java.util.HashMap;
 
 import a.a.a.wB;
 import dev.aldi.sayuti.editor.view.palette.IconBadgeView;
@@ -45,6 +48,8 @@ import mod.agus.jcoderz.editor.view.palette.IconSearchView;
 import mod.agus.jcoderz.editor.view.palette.IconTimePicker;
 import mod.agus.jcoderz.editor.view.palette.IconVideoView;
 import mod.hey.studios.util.Helper;
+import pro.sketchware.R;
+import pro.sketchware.widgets.IconCustomWidget;
 
 public class PaletteWidget extends LinearLayout {
 
@@ -54,6 +59,7 @@ public class PaletteWidget extends LinearLayout {
     private TextView titleLayouts;
     private TextView titleWidgets;
     private CustomScrollView scrollView;
+    public MaterialCardView cardView;
 
     public PaletteWidget(Context context) {
         super(context);
@@ -65,30 +71,43 @@ public class PaletteWidget extends LinearLayout {
         initialize(context);
     }
 
-    public View a(PaletteWidget.a layoutType, String tag) {
-        LinearLayout layout;
-        switch (layoutType) {
-            case a:
-                layout = new IconLinearHorizontal(getContext());
-                break;
+    public void AddCustomWidgets(View view) {
+        layoutContainer.addView(view);
+    }
 
-            case b:
-                layout = new IconLinearVertical(getContext());
-                break;
-
-            case c:
-                layout = new IconScrollViewHorizontal(getContext());
-                break;
-
-            case d:
-                layout = new IconScrollViewVertical(getContext());
-                break;
-
-            default:
-                layout = null;
+    public View CustomWidget(HashMap<String, Object> map) {
+        String title = map.get("title").toString();
+        String name = map.get("name").toString();
+        if (map.get("Class").toString().equals("Layouts")) {
+            LinearLayout iconBase;
+            Context context = getContext();
+            iconBase = new IconCustomWidget(map, context);
+            layoutContainer.addView(iconBase);
+            return iconBase;
+        } else {
+            IconBase iconBase;
+            Context context = getContext();
+            iconBase = new IconCustomWidget(map, context);
+            iconBase.setText(title);
+            iconBase.setName(name);
+            if (map.get("Class").toString().equals("AndroidX")) {
+                layoutContainer.addView(iconBase);
+            } else {
+                widgetsContainer.addView(iconBase);
+            }
+            return iconBase;
         }
+    }
 
-        if (tag != null && tag.length() > 0) {
+    public View a(PaletteWidget.a layoutType, String tag) {
+        LinearLayout layout = switch (layoutType) {
+            case a -> new IconLinearHorizontal(getContext());
+            case b -> new IconLinearVertical(getContext());
+            case c -> new IconScrollViewHorizontal(getContext());
+            case d -> new IconScrollViewVertical(getContext());
+        };
+
+        if (tag != null && !tag.isEmpty()) {
             layout.setTag(tag);
         }
 
@@ -99,68 +118,27 @@ public class PaletteWidget extends LinearLayout {
     public View a(PaletteWidget.b widgetType, String tag, String text, String resourceName) {
         IconBase iconBase;
         switch (widgetType) {
-            case a:
-                iconBase = new IconButton(getContext());
-                break;
-
-            case c:
-                iconBase = new IconEditText(getContext());
-                break;
-
-            case b:
-                iconBase = new IconTextView(getContext());
-                break;
-
-            case d:
+            case a -> iconBase = new IconButton(getContext());
+            case c -> iconBase = new IconEditText(getContext());
+            case b -> iconBase = new IconTextView(getContext());
+            case d -> {
                 iconBase = new IconImageView(getContext());
                 ((IconImageView) iconBase).setResourceName(resourceName);
-                break;
-
-            case e:
-                iconBase = new IconListView(getContext());
-                break;
-
-            case f:
-                iconBase = new IconSpinner(getContext());
-                break;
-
-            case g:
-                iconBase = new IconCheckBox(getContext());
-                break;
-
-            case h:
-                iconBase = new IconWebView(getContext());
-                break;
-
-            case i:
-                iconBase = new IconSwitch(getContext());
-                break;
-
-            case j:
-                iconBase = new IconSeekBar(getContext());
-                break;
-
-            case k:
-                iconBase = new IconCalendarView(getContext());
-                break;
-
-            case l:
-                iconBase = new IconAdView(getContext());
-                break;
-
-            case m:
-                iconBase = new IconProgressBar(getContext());
-                break;
-
-            case n:
-                iconBase = new IconMapView(getContext());
-                break;
-
-            default:
-                iconBase = null;
+            }
+            case e -> iconBase = new IconListView(getContext());
+            case f -> iconBase = new IconSpinner(getContext());
+            case g -> iconBase = new IconCheckBox(getContext());
+            case h -> iconBase = new IconWebView(getContext());
+            case i -> iconBase = new IconSwitch(getContext());
+            case j -> iconBase = new IconSeekBar(getContext());
+            case k -> iconBase = new IconCalendarView(getContext());
+            case l -> iconBase = new IconAdView(getContext());
+            case m -> iconBase = new IconProgressBar(getContext());
+            case n -> iconBase = new IconMapView(getContext());
+            default -> iconBase = null;
         }
 
-        if (tag != null && tag.length() > 0) {
+        if (tag != null && !tag.isEmpty()) {
             iconBase.setTag(tag);
         }
 
@@ -184,6 +162,7 @@ public class PaletteWidget extends LinearLayout {
         titleLayouts.setText(Helper.getResString(R.string.view_panel_title_layouts));
         titleWidgets.setText(Helper.getResString(R.string.view_panel_title_widgets));
         scrollView = findViewById(R.id.scv);
+        cardView = findViewById(R.id.cardView);
     }
 
     public void removeWidgets() {
@@ -196,7 +175,7 @@ public class PaletteWidget extends LinearLayout {
         LinearLayout divider = new LinearLayout(getContext());
         divider.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(1)));
         divider.setOrientation(LinearLayout.HORIZONTAL);
-        divider.setBackgroundColor(Color.parseColor("#12000000"));
+        divider.setBackgroundColor(Color.parseColor("#00000000"));
         target.addView(divider);
 
         TextView titleView = new TextView(getContext());
@@ -205,111 +184,40 @@ public class PaletteWidget extends LinearLayout {
         titleView.setLayoutParams(layoutParams);
         titleView.setText(title);
         titleView.setTextSize(12);
-        titleView.setTextColor(Color.parseColor("#FF009688"));
+        titleView.setTextColor(MaterialColors.getColor(titleView, com.google.android.material.R.attr.colorPrimary));
         target.addView(titleView);
     }
 
     public View extraWidget(String tag, String title, String name) {
         IconBase iconBase;
         Context context = getContext();
-        switch (title) {
-            case "DatePicker":
-                iconBase = new IconDatePicker(context);
-                break;
-
-            case "RatingBar":
-                iconBase = new IconRatingBar(context);
-                break;
-
-            case "SearchView":
-                iconBase = new IconSearchView(context);
-                break;
-
-            case "DigitalClock":
-                iconBase = new IconDigitalClock(context);
-                break;
-
-            case "RadioButton":
-                iconBase = new IconRadioButton(context);
-                break;
-
-            case "GridView":
-                iconBase = new IconGridView(context);
-                break;
-
-            case "AutoCompleteTextView":
-                iconBase = new IconAutoCompleteTextView(context);
-                break;
-
-            case "MultiAutoCompleteTextView":
-                iconBase = new IconMultiAutoCompleteTextView(context);
-                break;
-
-            case "VideoView":
-                iconBase = new IconVideoView(context);
-                break;
-
-            case "TimePicker":
-                iconBase = new IconTimePicker(context);
-                break;
-
-            case "AnalogClock":
-                iconBase = new IconAnalogClock(context);
-                break;
-
-            case "ViewPager":
-                iconBase = new IconViewPager(context);
-                break;
-
-            case "BadgeView":
-                iconBase = new IconBadgeView(context);
-                break;
-
-            case "PatternLockView":
-                iconBase = new IconPatternLockView(context);
-                break;
-
-            case "WaveSideBar":
-                iconBase = new IconWaveSideBar(context);
-                break;
-
-            case "SignInButton":
-                iconBase = new IconGoogleSignInButton(context);
-                break;
-
-            case "MaterialButton":
-                iconBase = new IconMaterialButton(context);
-                break;
-
-            case "CircleImageView":
-                iconBase = new IconCircleImageView(context);
-                break;
-
-            case "LottieAnimation":
-                iconBase = new IconLottieAnimation(context);
-                break;
-
-            case "YoutubePlayer":
-                iconBase = new IconYoutubePlayer(context);
-                break;
-
-            case "OTPView":
-                iconBase = new IconOTPView(context);
-                break;
-
-            case "CodeView":
-                iconBase = new IconCodeView(context);
-                break;
-
-            case "RecyclerView":
-                iconBase = new IconRecyclerView(context);
-                break;
-
-            default:
-                iconBase = null;
-                break;
-        }
-        if (tag != null && tag.length() > 0) {
+        iconBase = switch (title) {
+            case "DatePicker" -> new IconDatePicker(context);
+            case "RatingBar" -> new IconRatingBar(context);
+            case "SearchView" -> new IconSearchView(context);
+            case "DigitalClock" -> new IconDigitalClock(context);
+            case "RadioButton" -> new IconRadioButton(context);
+            case "GridView" -> new IconGridView(context);
+            case "AutoCompleteTextView" -> new IconAutoCompleteTextView(context);
+            case "MultiAutoCompleteTextView" -> new IconMultiAutoCompleteTextView(context);
+            case "VideoView" -> new IconVideoView(context);
+            case "TimePicker" -> new IconTimePicker(context);
+            case "AnalogClock" -> new IconAnalogClock(context);
+            case "ViewPager" -> new IconViewPager(context);
+            case "BadgeView" -> new IconBadgeView(context);
+            case "PatternLockView" -> new IconPatternLockView(context);
+            case "WaveSideBar" -> new IconWaveSideBar(context);
+            case "SignInButton" -> new IconGoogleSignInButton(context);
+            case "MaterialButton" -> new IconMaterialButton(context);
+            case "CircleImageView" -> new IconCircleImageView(context);
+            case "LottieAnimation" -> new IconLottieAnimation(context);
+            case "YoutubePlayer" -> new IconYoutubePlayer(context);
+            case "OTPView" -> new IconOTPView(context);
+            case "CodeView" -> new IconCodeView(context);
+            case "RecyclerView" -> new IconRecyclerView(context);
+            default -> null;
+        };
+        if (tag != null && !tag.isEmpty()) {
             iconBase.setTag(tag);
         }
 
@@ -322,40 +230,18 @@ public class PaletteWidget extends LinearLayout {
     public View extraWidgetLayout(String tag, String name) {
         IconBase iconBase;
         Context context = getContext();
-        switch (name) {
-            case "TabLayout":
-                iconBase = new IconTabLayout(context);
-                break;
-
-            case "BottomNavigationView":
-                iconBase = new IconBottomNavigationView(context);
-                break;
-
-            case "CollapsingToolbarLayout":
-                iconBase = new IconCollapsingToolbar(context);
-                break;
-
-            case "SwipeRefreshLayout":
-                iconBase = new IconSwipeRefreshLayout(context);
-                break;
-
-            case "RadioGroup":
-                iconBase = new IconRadioGroup(context);
-                break;
-
-            case "CardView":
-                iconBase = new IconCardView(context);
-                break;
-
-            case "TextInputLayout":
-                iconBase = new IconTextInputLayout(context);
-                break;
-
-            default:
-                iconBase = null;
-                break;
-        }
-        if (tag != null && tag.length() > 0) {
+        iconBase = switch (name) {
+            case "TabLayout" -> new IconTabLayout(context);
+            case "BottomNavigationView" -> new IconBottomNavigationView(context);
+            case "CollapsingToolbarLayout" -> new IconCollapsingToolbar(context);
+            case "SwipeRefreshLayout" -> new IconSwipeRefreshLayout(context);
+            case "RadioGroup" -> new IconRadioGroup(context);
+            case "CardView" -> new IconCardView(context);
+            case "TextInputLayout" -> new IconTextInputLayout(context);
+            case "RelativeLayout" -> new IconRelativeLayout(context);
+            default -> null;
+        };
+        if (tag != null && !tag.isEmpty()) {
             iconBase.setTag(tag);
         }
 

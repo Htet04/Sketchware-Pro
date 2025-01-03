@@ -3,7 +3,7 @@ package com.besome.sketch.editor.view;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.text.InputType;
 import android.util.AttributeSet;
 import android.view.View;
@@ -23,7 +23,8 @@ import com.besome.sketch.beans.ViewBean;
 import com.besome.sketch.ctrls.ViewIdSpinnerItem;
 import com.besome.sketch.editor.property.ViewPropertyItems;
 import com.besome.sketch.lib.ui.CustomHorizontalScrollView;
-import com.sketchware.remod.R;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.color.MaterialColors;
 
 import java.util.ArrayList;
 
@@ -40,7 +41,9 @@ import a.a.a.bB;
 import a.a.a.jC;
 import a.a.a.mB;
 import a.a.a.wB;
+import mod.hey.studios.project.ProjectSettings;
 import mod.hey.studios.util.Helper;
+import pro.sketchware.R;
 
 public class ViewProperty extends LinearLayout implements Kw {
 
@@ -133,12 +136,12 @@ public class ViewProperty extends LinearLayout implements Kw {
 
             if (selectedGroupId == (Integer) item.getTag()) {
                 item.setSelected(true);
-                item.title.setTextColor(Color.WHITE);
-                item.animate().scaleX(1).scaleY(1).alpha(1).start();
+                item.title.setTextColor(getResources().getColor(R.color.view_property_tab_active_text));
+                item.animate().scaleX(0.9f).scaleY(0.9f).start();
             } else {
                 item.setSelected(false);
-                item.title.setTextColor(0xff1d2129);
-                item.animate().scaleX(0.8f).scaleY(0.8f).alpha(0.6f).start();
+                item.title.setTextColor(getResources().getColor(R.color.view_property_tab_deactive_text));
+                item.animate().scaleX(0.8f).scaleY(0.8f).start();
             }
         }
         if (idsAdapter.getSelectedItemPosition() < projectActivityViews.size()) {
@@ -218,20 +221,38 @@ public class ViewProperty extends LinearLayout implements Kw {
         LinearLayout propertyContents = findViewById(R.id.property_contents);
         layoutPropertySeeAll = findViewById(R.id.layout_property_see_all);
         viewEvent = findViewById(R.id.view_event);
-        hcvProperty.setOnScrollChangedListener((l, t, oldl, oldt) -> {
-            if (Math.abs(l - oldt) <= 5) {
+        hcvProperty.setHorizontalScrollBarEnabled(false);
+        hcvProperty.setOnScrollChangedListener((scrollX, scrollY, oldScrollX, oldScrollY) -> {
+            if (Math.abs(scrollX - oldScrollY) <= 5) {
                 return;
             }
-            if (l > oldt) {
+            int maxScrollX = hcvProperty.getChildAt(0).getWidth() - hcvProperty.getWidth();
+            if (scrollX > 100 && scrollX < maxScrollX) {
+                if (scrollX > oldScrollX) {
+                    if (showAllVisible) {
+                        showAllVisible = false;
+                        cancelSeeAllAnimations();
+                        showAllHider.start();
+                    }
+                } else {
+                    if (!showAllVisible) {
+                        showAllVisible = true;
+                        cancelSeeAllAnimations();
+                        showAllShower.start();
+                    }
+                }
+            } else if (scrollX >= maxScrollX) {
                 if (showAllVisible) {
                     showAllVisible = false;
                     cancelSeeAllAnimations();
                     showAllHider.start();
                 }
-            } else if (!(showAllVisible)) {
-                showAllVisible = true;
-                cancelSeeAllAnimations();
-                showAllShower.start();
+            } else {
+                if (!showAllVisible) {
+                    showAllVisible = true;
+                    cancelSeeAllAnimations();
+                    showAllShower.start();
+                }
             }
         });
         imgSave = findViewById(R.id.img_save);
@@ -278,6 +299,7 @@ public class ViewProperty extends LinearLayout implements Kw {
     public void a(String sc_id, ProjectFileBean projectFileBean) {
         this.sc_id = sc_id;
         projectFile = projectFileBean;
+        viewPropertyItems.setProjectSettings(new ProjectSettings(sc_id));
     }
 
     public void a(String str) {
@@ -415,7 +437,7 @@ public class ViewProperty extends LinearLayout implements Kw {
 
     private class SeeAllPropertiesFloatingItem extends LinearLayout implements View.OnClickListener {
 
-        private final View propertyMenuItem;
+        private final MaterialCardView propertyMenuItem;
         private final ImageView icon;
         private final TextView title;
         private ViewBean viewBean;
@@ -438,9 +460,11 @@ public class ViewProperty extends LinearLayout implements Kw {
 
         private void configure(int imageResId, int propertyNameResId) {
             propertyMenuItem.setVisibility(VISIBLE);
+            propertyMenuItem.setCardBackgroundColor(MaterialColors.getColor(this, R.attr.colorPrimaryContainer));
             icon.setImageResource(imageResId);
+            icon.setColorFilter(MaterialColors.getColor(this, R.attr.colorOnPrimaryContainer), PorterDuff.Mode.SRC_ATOP);
             title.setText(Helper.getResString(propertyNameResId));
-            title.setTextColor(0xffff951b);
+            title.setTextColor(MaterialColors.getColor(this, R.attr.colorOnPrimaryContainer));
             setOnClickListener(this);
         }
 

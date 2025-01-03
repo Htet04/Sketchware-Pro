@@ -2,6 +2,7 @@ package com.besome.sketch.editor.manage.library;
 
 import static android.text.TextUtils.isEmpty;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -10,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 
@@ -20,7 +22,6 @@ import com.besome.sketch.editor.manage.library.compat.ManageCompatActivity;
 import com.besome.sketch.editor.manage.library.firebase.ManageFirebaseActivity;
 import com.besome.sketch.editor.manage.library.googlemap.ManageGoogleMapActivity;
 import com.besome.sketch.lib.base.BaseAppCompatActivity;
-import com.sketchware.remod.R;
 
 import java.lang.ref.WeakReference;
 
@@ -28,9 +29,12 @@ import a.a.a.MA;
 import a.a.a.aB;
 import a.a.a.jC;
 import a.a.a.mB;
+import dev.aldi.sayuti.editor.manage.ManageLocalLibraryActivity;
+import mod.hey.studios.activity.managers.nativelib.ManageNativelibsActivity;
 import mod.hey.studios.util.Helper;
 import mod.jbk.editor.manage.library.ExcludeBuiltInLibrariesActivity;
 import mod.jbk.editor.manage.library.ExcludeBuiltInLibrariesLibraryItemView;
+import pro.sketchware.R;
 
 public class ManageLibraryActivity extends BaseAppCompatActivity implements View.OnClickListener {
 
@@ -53,6 +57,8 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
     private String originalAdmobUseYn = "N";
     private String originalGoogleMapUseYn = "N";
 
+    private TextView externalLib;
+
     private void addLibraryItem(@Nullable ProjectLibraryBean libraryBean) {
         LibraryItemView libraryItemView;
         if (libraryBean != null) {
@@ -60,7 +66,6 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
         } else {
             libraryItemView = new ExcludeBuiltInLibrariesLibraryItemView(this, sc_id);
         }
-        libraryItemView.a(R.layout.manage_library_base_item);
         libraryItemView.setTag(libraryBean != null ? libraryBean.libType : null);
         //noinspection ConstantConditions since the variant if it's nullable handles nulls correctly
         libraryItemView.setData(libraryBean);
@@ -71,6 +76,14 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
             title.setText("Advanced");
             ((ViewGroup) title.getParent()).removeView(title);
             libraryItemLayout.addView(title);
+        } else if (libraryBean.libType == ProjectLibraryBean.PROJECT_LIB_TYPE_LOCAL_LIB || libraryBean.libType == ProjectLibraryBean.PROJECT_LIB_TYPE_NATIVE_LIB) {
+            libraryItemView.setHideEnabled();
+            if (externalLib == null) {
+                externalLib = findViewById(R.id.external_lib);
+                externalLib.setText("External libraries");
+                ((ViewGroup) externalLib.getParent()).removeView(externalLib);
+                libraryItemLayout.addView(externalLib);
+            }
         }
         libraryItemLayout.addView(libraryItemView);
     }
@@ -86,21 +99,10 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
     private void initializeLibrary(@Nullable ProjectLibraryBean libraryBean) {
         if (libraryBean != null) {
             switch (libraryBean.libType) {
-                case ProjectLibraryBean.PROJECT_LIB_TYPE_FIREBASE:
-                    firebaseLibraryBean = libraryBean;
-                    break;
-
-                case ProjectLibraryBean.PROJECT_LIB_TYPE_COMPAT:
-                    compatLibraryBean = libraryBean;
-                    break;
-
-                case ProjectLibraryBean.PROJECT_LIB_TYPE_ADMOB:
-                    admobLibraryBean = libraryBean;
-                    break;
-
-                case ProjectLibraryBean.PROJECT_LIB_TYPE_GOOGLE_MAP:
-                    googleMapLibraryBean = libraryBean;
-                    break;
+                case ProjectLibraryBean.PROJECT_LIB_TYPE_FIREBASE -> firebaseLibraryBean = libraryBean;
+                case ProjectLibraryBean.PROJECT_LIB_TYPE_COMPAT -> compatLibraryBean = libraryBean;
+                case ProjectLibraryBean.PROJECT_LIB_TYPE_ADMOB -> admobLibraryBean = libraryBean;
+                case ProjectLibraryBean.PROJECT_LIB_TYPE_GOOGLE_MAP -> googleMapLibraryBean = libraryBean;
             }
         }
 
@@ -154,6 +156,13 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.putExtra("sc_id", sc_id);
         startActivityForResult(intent, REQUEST_CODE_EXCLUDE_BUILTIN_LIBRARIES_ACTIVITY);
+    }
+
+    private void launchActivity(Class<? extends Activity> toLaunch) {
+        Intent intent = new Intent(getApplicationContext(), toLaunch);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.putExtra("sc_id", sc_id);
+        startActivity(intent);
     }
 
     private void saveLibraryConfiguration() {
@@ -240,6 +249,12 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
                     case ProjectLibraryBean.PROJECT_LIB_TYPE_GOOGLE_MAP:
                         toGoogleMapActivity(googleMapLibraryBean);
                         break;
+                    case ProjectLibraryBean.PROJECT_LIB_TYPE_LOCAL_LIB:
+                        launchActivity(ManageLocalLibraryActivity.class);
+                        break;
+                    case ProjectLibraryBean.PROJECT_LIB_TYPE_NATIVE_LIB:
+                        launchActivity(ManageNativelibsActivity.class);
+                        break;
                 }
             } else {
                 toExcludeBuiltinLibrariesActivity();
@@ -249,8 +264,9 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
-        if (!super.j()) {
+        if (!super.isStoragePermissionGranted()) {
             finish();
         }
 
@@ -263,11 +279,10 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
         setContentView(R.layout.manage_library);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        findViewById(R.id.layout_main_logo).setVisibility(View.GONE);
         getSupportActionBar().setTitle(Helper.getResString(R.string.design_actionbar_title_library));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
-        toolbar.setNavigationOnClickListener(Helper.getBackPressedClickListener(this));
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
         libraryItemLayout = findViewById(R.id.contents);
     }
 
@@ -313,6 +328,8 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
         addLibraryItem(firebaseLibraryBean);
         addLibraryItem(admobLibraryBean);
         addLibraryItem(googleMapLibraryBean);
+        addLibraryItem(new ProjectLibraryBean(ProjectLibraryBean.PROJECT_LIB_TYPE_LOCAL_LIB));
+        addLibraryItem(new ProjectLibraryBean(ProjectLibraryBean.PROJECT_LIB_TYPE_NATIVE_LIB));
         // Exclude built-in libraries
         addLibraryItem(null);
     }
@@ -320,7 +337,7 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
     @Override
     public void onResume() {
         super.onResume();
-        if (!super.j()) {
+        if (!super.isStoragePermissionGranted()) {
             finish();
         }
     }
@@ -341,7 +358,7 @@ public class ManageLibraryActivity extends BaseAppCompatActivity implements View
 
     private void showFirebaseNeedCompatDialog() {
         aB dialog = new aB(this);
-        dialog.a(R.drawable.widget_firebase);
+        dialog.a(R.drawable.ic_mtrl_firebase);
         dialog.b(Helper.getResString(R.string.common_word_warning));
         dialog.a(Helper.getResString(R.string.design_library_firebase_message_need_compat));
         dialog.b(Helper.getResString(R.string.common_word_ok), Helper.getDialogDismissListener(dialog));

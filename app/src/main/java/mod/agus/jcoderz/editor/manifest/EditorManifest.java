@@ -3,7 +3,7 @@ package mod.agus.jcoderz.editor.manifest;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.sketchware.remod.xml.XmlBuilder;
+import pro.sketchware.xml.XmlBuilder;
 
 /**
  * A helper class to add various elements to AndroidManifest.xml if components have been added,
@@ -35,7 +35,7 @@ public class EditorManifest {
     }
 
     public static void manifestOneSignal(XmlBuilder applicationTag, String packageName, HashMap<String, ArrayList<String>> hashMap) {
-        if (hashMap.size() != 0) {
+        if (!hashMap.isEmpty()) {
             XmlBuilder metadataTag = new XmlBuilder("meta-data");
             metadataTag.addAttribute("android", "name", "onesignal_app_id");
             metadataTag.addAttribute("android", "value", hashMap.get("OneSignal setAppId").get(0));

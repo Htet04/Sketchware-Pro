@@ -1,205 +1,139 @@
 package mod.hey.studios.build;
 
-import static mod.SketchwareUtil.getDip;
+import static mod.hey.studios.build.BuildSettings.SETTING_ANDROID_JAR_PATH;
+import static mod.hey.studios.build.BuildSettings.SETTING_CLASSPATH;
+import static mod.hey.studios.build.BuildSettings.SETTING_DEXER;
+import static mod.hey.studios.build.BuildSettings.SETTING_ENABLE_LOGCAT;
+import static mod.hey.studios.build.BuildSettings.SETTING_JAVA_VERSION;
+import static mod.hey.studios.build.BuildSettings.SETTING_NO_HTTP_LEGACY;
+import static mod.hey.studios.build.BuildSettings.SETTING_NO_WARNINGS;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.graphics.Typeface;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.TextView;
 
-import com.google.android.material.textfield.TextInputLayout;
-import com.sketchware.remod.R;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-import mod.SketchwareUtil;
-import mod.hey.studios.util.Helper;
+import pro.sketchware.R;
+import pro.sketchware.databinding.ProjectConfigLayoutBinding;
+import pro.sketchware.utility.SketchwareUtil;
 
 public class BuildSettingsDialog {
+    private static int totalViews = 0;
+
+    private static final int VIEW_ANDROIR_JAR_PATH = totalViews++;
+    private static final int VIEW_CLASS_PATH = totalViews++;
+    private static final int VIEW_DEXER = totalViews++;
+    private static final int VIEW_JAVA_VERSION = totalViews++;
+    private static final int VIEW_NO_WARNINGS = totalViews++;
+    private static final int VIEW_NO_HTTP_LEGACY = totalViews++;
+    private static final int VIEW_ENABLE_LOGCAT = totalViews++;
 
     private final Activity activity;
     private final BuildSettings settings;
+    private final ProjectConfigLayoutBinding binding;
+    private final View[] views;
 
     public BuildSettingsDialog(Activity activity, String sc_id) {
         this.activity = activity;
+
         settings = new BuildSettings(sc_id);
+        views = new View[totalViews];
+        binding = ProjectConfigLayoutBinding.inflate(activity.getLayoutInflater());
+
+        views[VIEW_ANDROIR_JAR_PATH] = binding.tilAndroidJar.getEditText();
+        views[VIEW_CLASS_PATH] = binding.tilClasspath.getEditText();
+        views[VIEW_DEXER] = binding.rgDexer;
+        views[VIEW_ENABLE_LOGCAT] = binding.cbEnableLogcat;
+        views[VIEW_JAVA_VERSION] = binding.rgJavaVersion;
+        views[VIEW_NO_HTTP_LEGACY] = binding.cbNoHttpLegacy;
+        views[VIEW_NO_WARNINGS] = binding.cbNoWarnings;
+
+        // necessary for mod.hey.studios.project.ProjectSettings, since it checks
+        // for the presence of a tag if missing it cannot save the data
+        addTagsForViews();
+    }
+
+    private void addTagsForViews() {
+        views[VIEW_ANDROIR_JAR_PATH].setTag(SETTING_ANDROID_JAR_PATH);
+        views[VIEW_CLASS_PATH].setTag(SETTING_CLASSPATH);
+        views[VIEW_DEXER].setTag(SETTING_DEXER);
+        views[VIEW_ENABLE_LOGCAT].setTag(SETTING_ENABLE_LOGCAT);
+        views[VIEW_JAVA_VERSION].setTag(SETTING_JAVA_VERSION);
+        views[VIEW_NO_HTTP_LEGACY].setTag(SETTING_NO_HTTP_LEGACY);
+        views[VIEW_NO_WARNINGS].setTag(SETTING_NO_WARNINGS);
     }
 
     public void show() {
-        var builder = new AlertDialog.Builder(activity);
+        assert views != null || views.length != 0;
 
-        var inflate = activity.getLayoutInflater().inflate(R.layout.project_config_layout, null);
+        getEditText(VIEW_ANDROIR_JAR_PATH).setText(settings.getValue(SETTING_ANDROID_JAR_PATH, ""));
+        getEditText(VIEW_CLASS_PATH).setText(settings.getValue(SETTING_CLASSPATH, ""));
 
-        ImageView icon = inflate.findViewById(R.id.project_config_icon);
-        TextView title = inflate.findViewById(R.id.project_config_title);
-        LinearLayout contentView = inflate.findViewById(R.id.project_config_pref_layout);
-        TextView cancel = inflate.findViewById(R.id.text_cancel);
-        TextView save = inflate.findViewById(R.id.text_save);
+        setRadioGroupOptions(getRadioGroup(VIEW_DEXER), new String[]{"Dx", "D8"}, SETTING_DEXER, "Dx");
+        setRadioGroupOptions(getRadioGroup(VIEW_JAVA_VERSION), BuildSettingsDialogBridge.getAvailableJavaVersions(), SETTING_JAVA_VERSION, "1.7");
 
-        icon.setImageResource(R.drawable.side_menu_setting_icon_over);
-        title.setText("Build Settings");
+        setCheckboxValue(getCheckbox(VIEW_NO_WARNINGS), SETTING_NO_WARNINGS, true);
+        setCheckboxValue(getCheckbox(VIEW_NO_HTTP_LEGACY), SETTING_NO_HTTP_LEGACY, false);
+        setCheckboxValue(getCheckbox(VIEW_ENABLE_LOGCAT), SETTING_ENABLE_LOGCAT, true);
 
-        View[] viewArr = {
-                addInputPref(BuildSettings.SETTING_ANDROID_JAR_PATH, "", "Custom android.jar", EditorInfo.TYPE_CLASS_TEXT, contentView),
-                addInputPref(BuildSettings.SETTING_CLASSPATH, "", "Classpath (separated by :)", EditorInfo.TYPE_CLASS_TEXT, contentView),
-                addSingleChoicePref(BuildSettings.SETTING_DEXER, new String[]{"Dx", "D8"}, "Dx", "Dexer", contentView),
-                addSingleChoicePref(BuildSettings.SETTING_JAVA_VERSION, BuildSettingsDialogBridge.getAvailableJavaVersions(), "1.7", "Java version", contentView),
-                addTogglePref(BuildSettings.SETTING_NO_WARNINGS, true, "Hide warnings in error log", contentView),
-                addTogglePref(BuildSettings.SETTING_NO_HTTP_LEGACY, false, "Don't include http-legacy-28.dex", contentView),
-                addTogglePref(BuildSettings.SETTING_ENABLE_LOGCAT, true, "Enable debug logcat logs viewable in Logcat Reader. Not enabled in exported AABs/APKs.", contentView)
-        };
-
-        builder.setView(inflate);
-
-        var buildSettingsDialog = builder.create();
-        buildSettingsDialog.show();
-        cancel.setOnClickListener(Helper.getDialogDismissListener(buildSettingsDialog));
-        save.setOnClickListener(v -> {
-            settings.setValues(viewArr);
-            buildSettingsDialog.dismiss();
-        });
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(activity);
+        builder.setIcon(R.drawable.ic_mtrl_tune);
+        builder.setTitle("Build Settings");
+        builder.setPositiveButton("Save", (d, which) -> settings.setValues(views));
+        builder.setNegativeButton("Cancel", null);
+        builder.setView(binding.getRoot());
+        builder.show();
     }
 
-    private RadioGroup addSingleChoicePref(String key, String[] choices, String defaultValue, String title, LinearLayout addTo) {
-        var textView = new TextView(activity);
+    private EditText getEditText(int index) {
+        return (EditText) views[index];
+    }
 
-        textView.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-        textView.setText(title);
-        textView.setTextSize(14f);
-        textView.setTextColor(0xff008DCD);
-        textView.setTypeface(null, Typeface.BOLD);
-        textView.setPadding(
-                0,
-                (int) getDip(12),
-                0,
-                (int) getDip(12)
-        );
+    private RadioGroup getRadioGroup(int index) {
+        return (RadioGroup) views[index];
+    }
 
-        addTo.addView(textView);
+    private CheckBox getCheckbox(int index) {
+        return (CheckBox) views[index];
+    }
 
-        var radioGroup = new RadioGroup(activity);
-        radioGroup.setOrientation(LinearLayout.HORIZONTAL);
-        radioGroup.setTag(key);
-        radioGroup.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        addTo.addView(radioGroup);
-
-        for (String choice : choices) {
-            RadioButton radioButton = new RadioButton(activity);
-
-            var layoutParams = new LinearLayout.LayoutParams(
-                    0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    1.0f);
-            radioButton.setLayoutParams(layoutParams);
+    private void setRadioGroupOptions(RadioGroup radioGroup, String[] options, String key, String defaultValue) {
+        radioGroup.removeAllViews();
+        String value = settings.getValue(key, defaultValue);
+        for (String option : options) {
+            RadioButton radioButton = new RadioButton(radioGroup.getContext());
+            radioButton.setText(option);
             radioButton.setId(View.generateViewId());
-            radioButton.setText(choice);
-            radioButton.setTextColor(0xff000000);
-            radioButton.setTextSize(16f);
-
-            if (settings.getValue(key, defaultValue).equals(choice)) {
+            radioButton.setLayoutParams(new RadioGroup.LayoutParams(0, -2, 1f));
+            if (value.equals(option)) {
                 radioButton.setChecked(true);
             }
-
-            radioGroup.addView(radioButton);
             radioButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (!isChecked) return;
-
-                if (key.equals(BuildSettings.SETTING_JAVA_VERSION)) {
-                    BuildSettingsDialogBridge.handleJavaVersionChange(choice);
-                } else if (key.equals(BuildSettings.SETTING_DEXER)) {
-                    BuildSettingsDialogBridge.handleDexerChange(choice);
+                if (key.equals(SETTING_JAVA_VERSION)) {
+                    BuildSettingsDialogBridge.handleJavaVersionChange(option);
+                } else if (key.equals(SETTING_DEXER)) {
+                    BuildSettingsDialogBridge.handleDexerChange(option);
                 }
             });
+            radioGroup.addView(radioButton);
         }
-        return radioGroup;
     }
 
-    private CheckBox addTogglePref(String key, boolean defaultValue, String label, LinearLayout addTo) {
-        CheckBox checkBox = new CheckBox(activity);
-
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        layoutParams.setMargins(
-                0,
-                (int) getDip(12),
-                0,
-                0
-        );
-        checkBox.setLayoutParams(layoutParams);
-
-        addTo.addView(checkBox);
-
+    private void setCheckboxValue(CheckBox checkBox, String key, boolean defaultValue) {
         String value = settings.getValue(key, defaultValue ? "true" : "false");
-        checkBox.setText(label);
         checkBox.setChecked(value.equals("true"));
-        checkBox.setTextColor(0xff000000);
-        checkBox.setPadding(
-                (int) getDip(4),
-                (int) getDip(8),
-                (int) getDip(8),
-                (int) getDip(8)
-        );
-        checkBox.setTag(key);
 
-        if (key.equals(BuildSettings.SETTING_NO_HTTP_LEGACY)) {
-            checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                if (isChecked) {
+        checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                if (key.equals(SETTING_NO_HTTP_LEGACY)) {
                     SketchwareUtil.toast("Note that this option may cause issues if RequestNetwork component is used");
                 }
-            });
-        }
-
-        return checkBox;
-    }
-
-    private EditText addInputPref(String key, String defaultValue, String hint, int inputType, LinearLayout addTo) {
-        TextInputLayout textInputLayout = new TextInputLayout(activity);
-
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        layoutParams.setMargins(
-                0,
-                (int) getDip(12),
-                0,
-                0
-        );
-
-        textInputLayout.setLayoutParams(layoutParams);
-
-        addTo.addView(textInputLayout);
-
-        EditText editText = new EditText(activity);
-        editText.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-        editText.setPadding(
-                (int) getDip(4),
-                (int) getDip(8),
-                (int) getDip(8),
-                (int) getDip(8)
-        );
-        editText.setTextSize(16f);
-        editText.setTextColor(0xff000000);
-        editText.setHint(hint);
-        editText.setHintTextColor(0xff607d8b);
-        editText.setText(settings.getValue(key, defaultValue));
-        editText.setTag(key);
-        editText.setInputType(inputType);
-
-        textInputLayout.addView(editText);
-
-        return editText;
+            }
+        });
     }
 }

@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -11,6 +12,7 @@
         android:layout_weight="1">
 
         <RelativeLayout
+            android:id="@+id/container"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
@@ -20,13 +22,45 @@
                 android:layout_height="match_parent"
                 android:orientation="vertical">
 
-                <include layout="@layout/toolbar" />
+                <com.google.android.material.appbar.AppBarLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fitsSystemWindows="true">
+
+                    <androidx.appcompat.widget.Toolbar
+                        android:id="@+id/toolbar"
+                        android:layout_width="match_parent"
+                        android:layout_height="?attr/actionBarSize"
+                        app:navigationIcon="?attr/homeAsUpIndicator"
+                        tools:menu="@menu/design_menu"
+                        tools:subtitle="605"
+                        app:subtitleTextColor="?attr/colorSecondary"
+                        tools:title="InternalDemo" />
+                </com.google.android.material.appbar.AppBarLayout>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/mainTabsCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="8dp"
+                    android:layout_marginTop="3dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/transparent"
+                    app:shapeAppearance="?attr/shapeAppearanceCornerLarge"
+                    app:strokeWidth="0dp">
 
                 <com.google.android.material.tabs.TabLayout
                     android:id="@+id/tab_layout"
-                    style="@style/DesignTabLayout"
                     android:layout_width="match_parent"
-                    android:layout_height="@dimen/action_bar_height" />
+                    android:layout_height="wrap_content" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:dividerThickness="0.5dp" />
 
                 <androidx.coordinatorlayout.widget.CoordinatorLayout
                     android:id="@+id/layout_coordinator"
@@ -37,73 +71,100 @@
                     <com.besome.sketch.lib.ui.CustomViewPager
                         android:id="@+id/viewpager"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@android:color/white" />
+                        android:layout_height="match_parent" />
                 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-                <View
+                <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="#ffececec" />
+                    android:layout_height="wrap_content" />
 
                 <LinearLayout
-                    android:id="@+id/layout_btn_group"
+                    android:id="@+id/progress_container"
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
-                    android:background="#ffffffff"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingLeft="8dp"
-                    android:paddingRight="8dp">
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:orientation="vertical">
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:id="@+id/img_orientation"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center_vertical"
-                            android:scaleType="fitXY"
-                            android:src="@drawable/ic_screen_portrait_grey600_24dp" />
-
-                        <com.besome.sketch.editor.view.ProjectFileSelector
-                            android:id="@+id/file_selector"
-                            android:layout_width="match_parent"
-                            android:layout_height="36dp" />
-                    </LinearLayout>
-
-                    <ImageButton
-                        android:id="@+id/btn_compiler_opt"
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="8dp"
-                        android:elevation="4dp"
-                        android:padding="4dp"
-                        android:src="@drawable/sorting_options_48"
-                        android:theme="@style/AppTheme.Button.LightBlue" />
-
-                    <Button
-                        android:id="@+id/btn_execute"
+                    <TextView
+                        android:id="@+id/progress_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="2dp"
-                        android:textColor="#ffffffff"
-                        android:textSize="@dimen/text_size_button_material"
-                        android:textStyle="bold"
-                        android:theme="@style/AppTheme.Button.LightBlue" />
+                        android:layout_marginHorizontal="5dp"
+                        android:padding="10dp"
+                        tools:text="Building your awesome app..."
+                        android:singleLine="true"
+                        android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/progress"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:progress="0"
+                        android:indeterminate="false" />
                 </LinearLayout>
+
+                <com.google.android.material.bottomappbar.BottomAppBar
+                    android:id="@+id/bottom_app_bar"
+                    style="@style/Widget.Material3.BottomAppBar.Legacy"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    app:menu="@menu/design_bottom_menu"
+                    app:paddingLeftSystemWindowInsets="false"
+                    app:paddingBottomSystemWindowInsets="false">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/file_name_container"
+                        style="?attr/materialCardViewStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="8dp"
+                        android:clickable="true"
+                        app:contentPadding="12dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center_vertical">
+
+                            <ImageView
+                                android:id="@+id/img_orientation"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginHorizontal="6dp"
+                                android:src="@drawable/ic_mtrl_screen"
+                                app:tint="?attr/colorControlNormal" />
+
+                            <TextView
+                                android:id="@+id/file_name"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginHorizontal="5dp"
+                                android:singleLine="true"
+                                android:text="main"
+                                android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginEnd="8dp"
+                                android:src="@drawable/ic_arrow_drop_down_24px"
+                                app:tint="?attr/colorControlNormal" />
+
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.bottomappbar.BottomAppBar>
             </LinearLayout>
 
             <com.besome.sketch.editor.view.ViewProperty
                 android:id="@+id/view_property"
                 android:layout_width="match_parent"
-                android:layout_height="156dp"
+                android:layout_height="180dp"
                 android:layout_alignParentBottom="true"
-                android:translationY="156dp" />
+                android:translationY="180dp" />
         </RelativeLayout>
 
         <com.besome.sketch.design.DesignDrawer

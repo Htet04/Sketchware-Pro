@@ -1,6 +1,6 @@
 package com.besome.sketch.common;
 
-import android.app.AlertDialog;
+import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -13,11 +13,11 @@ import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.Spinner;
 
-import androidx.appcompat.app.AppCompatActivity;
-
+import com.besome.sketch.lib.base.BaseAppCompatActivity;
 import com.besome.sketch.beans.SrcCodeBean;
 import com.besome.sketch.ctrls.CommonSpinnerItem;
-import com.sketchware.remod.R;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import pro.sketchware.R;
 
 import java.util.ArrayList;
 
@@ -28,11 +28,12 @@ import a.a.a.yq;
 import io.github.rosemoe.sora.langs.java.JavaLanguage;
 import io.github.rosemoe.sora.widget.CodeEditor;
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme;
+import io.github.rosemoe.sora.widget.schemes.SchemeDarcula;
 import mod.hey.studios.util.Helper;
 import mod.jbk.code.CodeEditorColorSchemes;
 import mod.jbk.code.CodeEditorLanguages;
 
-public class SrcViewerActivity extends AppCompatActivity {
+public class SrcViewerActivity extends BaseAppCompatActivity {
 
     private String sc_id;
     private Spinner filesListSpinner;
@@ -141,10 +142,30 @@ public class SrcViewerActivity extends AppCompatActivity {
 
     private void setCorrectCodeEditorLanguage() {
         if (currentPageFileName.endsWith(".xml")) {
-            codeViewer.setColorScheme(CodeEditorColorSchemes.loadTextMateColorScheme(CodeEditorColorSchemes.THEME_GITHUB));
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                Configuration configuration = getResources().getConfiguration();
+                boolean isDarkTheme = isDarkTheme = configuration.isNightModeActive();
+                if (isDarkTheme) {
+                    codeViewer.setColorScheme(CodeEditorColorSchemes.loadTextMateColorScheme(CodeEditorColorSchemes.THEME_DRACULA));
+                } else {
+                    codeViewer.setColorScheme(CodeEditorColorSchemes.loadTextMateColorScheme(CodeEditorColorSchemes.THEME_GITHUB));
+                }
+            } else {
+                codeViewer.setColorScheme(CodeEditorColorSchemes.loadTextMateColorScheme(CodeEditorColorSchemes.THEME_GITHUB));
+            }
             codeViewer.setEditorLanguage(CodeEditorLanguages.loadTextMateLanguage(CodeEditorLanguages.SCOPE_NAME_XML));
         } else {
-            codeViewer.setColorScheme(new EditorColorScheme());
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                Configuration configuration = getResources().getConfiguration();
+                boolean isDarkTheme = isDarkTheme = configuration.isNightModeActive();
+                if (isDarkTheme) {
+                    codeViewer.setColorScheme( new SchemeDarcula());
+                } else {
+                    codeViewer.setColorScheme( new EditorColorScheme());
+                }
+            } else {
+                codeViewer.setColorScheme( new EditorColorScheme());
+            }
             codeViewer.setEditorLanguage(new JavaLanguage());
         }
     }
@@ -162,11 +183,11 @@ public class SrcViewerActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 Gravity.CENTER));
 
-        new AlertDialog.Builder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle("Select font size")
-                .setIcon(R.drawable.ic_font_48dp)
+                .setIcon(R.drawable.ic_mtrl_formattext)
                 .setView(layout)
-                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                .setPositiveButton("Apply", (dialog, which) -> {
                     sourceCodeFontSize = picker.getValue();
                     codeViewer.setTextSize(sourceCodeFontSize);
                 })
